@@ -1,0 +1,18 @@
+INSERT INTO users VALUES (1, 'mat', 'test_hash_value', 'ADMIN');
+INSERT INTO machines VALUES (1, 'harvester_mk1', 1, 0, 0, 1, 0, 1, 1);
+INSERT INTO machines VALUES (2, 'smelter_mk1', 1, 1, 0, 1, 0, 1, 1);
+INSERT INTO machines VALUES (3, 'constructor_mk1', 1, 1, 0, 1, 0, 1, 1);
+INSERT INTO resources VALUES (1, 'iron_ore', 1, 0, '');
+INSERT INTO resources VALUES (2, 'iron_ingot', 1, 0, '');
+INSERT INTO resources VALUES (3, 'iron_plate', 1, 0, '');
+INSERT INTO recipies VALUES (1, 'iron_ore_harvesting_default', 1, 60, 'seconds', 1);
+INSERT INTO recipies VALUES (2, 'iron_ingot', 1, 60, 'seconds', 1);
+INSERT INTO recipies VALUES (3, 'iron_plate', 1, 60, 'seconds', 1);
+INSERT INTO recipies_inputs VALUES (1, 1, 2, 1, 30);
+INSERT INTO recipies_inputs VALUES (2, 1, 3, 2, 30);
+INSERT INTO recipies_outputs VALUES (1, 1, 1, 1, 60);
+INSERT INTO recipies_outputs VALUES (2, 1, 2, 2, 30);
+INSERT INTO recipies_outputs VALUES (3, 1, 3, 3, 20);
+INSERT INTO machines_recipies VALUES (1, 1, 1, 1);
+INSERT INTO machines_recipies VALUES (2, 1, 2, 2);
+INSERT INTO machines_recipies VALUES (3, 1, 3, 3);

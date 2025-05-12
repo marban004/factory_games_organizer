@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/marban004/factory_games_organizer.git/prototypes"
 )
 
 func main() {
-	fmt.Println("Hello world!")
+	prototypes.Calculate()
+	fmt.Println("done")
 }
