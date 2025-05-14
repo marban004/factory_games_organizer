@@ -7,14 +7,14 @@ DROP TABLE IF EXISTS recipies_outputs;
 DROP TABLE IF EXISTS machines_recipies;
 
 CREATE TABLE users(
-    id            integer,
+    id            integer PRIMARY KEY AUTOINCREMENT,
     name          text,
     password_hash text,
     role          text
 );
 
 CREATE TABLE machines(
-    id             integer,
+    id             integer PRIMARY KEY AUTOINCREMENT,
     name           text,
     users_id       integer,
     inputs_solid   integer,
@@ -22,45 +22,57 @@ CREATE TABLE machines(
     outputs_solid  integer,
     outputs_liquid integer,
     speed          integer,
-    default_choice integer
+    default_choice integer,
+    FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
 CREATE TABLE resources(
-    id             integer,
+    id             integer PRIMARY KEY AUTOINCREMENT,
     name           text,
     users_id       integer,
     liquid         integer,
-    resurce_unit   text
+    resurce_unit   text,
+    FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
 CREATE TABLE recipies(
-    id                    integer,
+    id                    integer PRIMARY KEY AUTOINCREMENT,
     name                  text,
     users_id              integer,
     production_time       integer,
     production_time_unit  text,
-    default_choice        integer
+    default_choice        integer,
+    FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
 CREATE TABLE recipies_inputs(
-    id                    integer,
+    id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
     recipies_id           integer,
     resources_id          integer,
-    amount                integer
+    amount                integer,
+    FOREIGN KEY(users_id) REFERENCES users(id),
+    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(resources_id) REFERENCES resources(id)
 );
 
 CREATE TABLE recipies_outputs(
-    id                    integer,
+    id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
     recipies_id           integer,
     resources_id          integer,
-    amount                integer
+    amount                integer,
+    FOREIGN KEY(users_id) REFERENCES users(id),
+    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(resources_id) REFERENCES resources(id)
 );
 
 CREATE TABLE machines_recipies(
-    id                    integer,
+    id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
     recipies_id           integer,
-    machines_id           integer
+    machines_id           integer,
+    FOREIGN KEY(users_id) REFERENCES users(id),
+    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(machines_id) REFERENCES machines(id)
 );
