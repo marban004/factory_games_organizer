@@ -39,8 +39,7 @@ CREATE TABLE recipies(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     name                  text,
     users_id              integer,
-    production_time       integer,
-    production_time_unit  text,
+    production_time_s     integer,
     default_choice        integer,
     FOREIGN KEY(users_id) REFERENCES users(id)
 );
