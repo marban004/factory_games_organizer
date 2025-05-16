@@ -1,10 +1,10 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS machines;
 DROP TABLE IF EXISTS resources;
-DROP TABLE IF EXISTS recipies;
-DROP TABLE IF EXISTS recipies_inputs;
-DROP TABLE IF EXISTS recipies_outputs;
-DROP TABLE IF EXISTS machines_recipies;
+DROP TABLE IF EXISTS recipes;
+DROP TABLE IF EXISTS recipes_inputs;
+DROP TABLE IF EXISTS recipes_outputs;
+DROP TABLE IF EXISTS machines_recipes;
 
 CREATE TABLE users(
     id            integer PRIMARY KEY AUTOINCREMENT,
@@ -35,7 +35,7 @@ CREATE TABLE resources(
     FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
-CREATE TABLE recipies(
+CREATE TABLE recipes(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     name                  text,
     users_id              integer,
@@ -44,34 +44,34 @@ CREATE TABLE recipies(
     FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
-CREATE TABLE recipies_inputs(
+CREATE TABLE recipes_inputs(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
-    recipies_id           integer,
+    recipes_id           integer,
     resources_id          integer,
     amount                integer,
     FOREIGN KEY(users_id) REFERENCES users(id),
-    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(recipes_id) REFERENCES recipes(id),
     FOREIGN KEY(resources_id) REFERENCES resources(id)
 );
 
-CREATE TABLE recipies_outputs(
+CREATE TABLE recipes_outputs(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
-    recipies_id           integer,
+    recipes_id            integer,
     resources_id          integer,
     amount                integer,
     FOREIGN KEY(users_id) REFERENCES users(id),
-    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(recipes_id) REFERENCES recipes(id),
     FOREIGN KEY(resources_id) REFERENCES resources(id)
 );
 
-CREATE TABLE machines_recipies(
+CREATE TABLE machines_recipes(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
-    recipies_id           integer,
+    recipes_id           integer,
     machines_id           integer,
     FOREIGN KEY(users_id) REFERENCES users(id),
-    FOREIGN KEY(recipies_id) REFERENCES recipies(id),
+    FOREIGN KEY(recipes_id) REFERENCES recipes(id),
     FOREIGN KEY(machines_id) REFERENCES machines(id)
 );
