@@ -2,6 +2,8 @@ package prototypes
 
 import (
 	"container/list"
+	"encoding/json"
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
@@ -44,7 +46,7 @@ type ProductionTreeNode struct {
 	MachineNumber              float32
 	RequiredResourcesPerSecond map[string]float32
 	ProducedResourcesPerSecond map[string]float32
-	SourceNodes                list.List
+	SourceNodes                []int
 }
 
 type ResourceSource struct {
@@ -53,27 +55,49 @@ type ResourceSource struct {
 	ExcessProducedResourcePerSecond float32
 }
 
-// If using default recipes pass empty string array
-func Calculate(desiredResourceName string, desiredRate float32, names []string, db *gorm.DB) {
-	ProductionTreeNodes := make(map[int]*ProductionTreeNode)
-	ExcessResources := list.New()
-	findAndComputeBestrecipeForResource(desiredResourceName, desiredRate, names, ProductionTreeNodes, ExcessResources, db)
-	for _, Node := range ProductionTreeNodes {
-		fmt.Println("Making recipe:", Node.RecipeName, Node.MachineName, Node.MachineNumber)
-		fmt.Println("Node number:", Node.NodeId, "Source nodes: ")
-		if Node.SourceNodes.Len() != 0 {
-			for e := Node.SourceNodes.Front(); e != nil; e = e.Next() {
-				fmt.Println("\t", e.Value)
-			}
-		}
-		fmt.Println("------------------------------------------")
-	}
-	for e := ExcessResources.Front(); e != nil; e = e.Next() {
-		fmt.Println(e.Value)
-	}
+type ProductionTree struct {
+	TreeNodes                map[int]*ProductionTreeNode
+	TargetResource           string
+	TargetResourceRate       float32
+	TargetResourceSourceNode int
+	ExcessResources          []*ResourceSource
 }
 
-func findBestrecipe(desiredResourceName string, names []string, db *gorm.DB, bestrecipe *BestrecipeResult) {
+// If using default recipes pass empty string array
+func Calculate(userId int, desiredResourceName string, desiredRate float32, names []string, db *gorm.DB) ([]byte, error) {
+	productionTreeNodes := make(map[int]*ProductionTreeNode)
+	excessResources := list.New()
+	calculationResult := ProductionTree{TreeNodes: make(map[int]*ProductionTreeNode), ExcessResources: make([]*ResourceSource, excessResources.Len())}
+	var err error
+	calculationResult.TargetResourceSourceNode, err = findAndComputeBestrecipeForResource(userId, desiredResourceName, desiredRate, names, productionTreeNodes, excessResources, db)
+	if err != nil {
+		return nil, fmt.Errorf("could not compute production chain for resource '%s': %w", desiredResourceName, err)
+	}
+	// for _, Node := range ProductionTreeNodes {
+	// 	fmt.Println("Making recipe:", Node.RecipeName, Node.MachineName, Node.MachineNumber)
+	// 	fmt.Println("Node number:", Node.NodeId, "Source nodes: ")
+	// 	if Node.SourceNodes.Len() != 0 {
+	// 		for e := Node.SourceNodes.Front(); e != nil; e = e.Next() {
+	// 			fmt.Println("\t", e.Value)
+	// 		}
+	// 	}
+	// 	fmt.Println("------------------------------------------")
+	// }
+	for e := excessResources.Front(); e != nil; e = e.Next() {
+		newEntry := ResourceSource{NodeId: e.Value.(ResourceSource).NodeId, ExcessResourceName: e.Value.(ResourceSource).ExcessResourceName, ExcessProducedResourcePerSecond: e.Value.(ResourceSource).ExcessProducedResourcePerSecond}
+		calculationResult.ExcessResources = append(calculationResult.ExcessResources, &newEntry)
+	}
+	calculationResult.TreeNodes = productionTreeNodes
+	calculationResult.TargetResource = desiredResourceName
+	calculationResult.TargetResourceRate = desiredRate
+	byteJSONRepresentation, err := json.Marshal(calculationResult)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate json representation: %w", err)
+	}
+	return byteJSONRepresentation, nil
+}
+
+func findBestrecipe(userId int, desiredResourceName string, names []string, db *gorm.DB, bestrecipe *BestrecipeResult) error {
 	var query string = `SELECT rcp.id, rcp.name AS recipe_name, ro.amount AS amount_produced, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ro.amount AS FLOAT)/rcp.production_time_s*m.speed) rate 
 							FROM recipes rcp
 							JOIN recipes_outputs ro ON rcp.id = ro.recipes_id
@@ -93,20 +117,34 @@ func findBestrecipe(desiredResourceName string, names []string, db *gorm.DB, bes
 		}
 		query += ")) "
 	}
-	query += `ORDER BY rcp.default_choice, rate DESC
-				LIMIT 1;`
-	db.Raw(query).Scan(bestrecipe)
+	query += ` AND rcp.users_id = '` + fmt.Sprint(userId) + `'
+			AND ro.users_id = '` + fmt.Sprint(userId) + `'
+			AND r.users_id = '` + fmt.Sprint(userId) + `'
+			AND mr.users_id = '` + fmt.Sprint(userId) + `'
+			AND m.users_id = '` + fmt.Sprint(userId) + `'
+			ORDER BY rcp.default_choice, rate DESC
+			LIMIT 1;`
+	result := db.Raw(query).Scan(bestrecipe)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) || result.RowsAffected == 0 {
+		return fmt.Errorf("could not find recipe for '%s'", desiredResourceName)
+	}
+	return nil
 	//fmt.Println("selected recipe", bestrecipe.RecipeName)
 }
 
-func getRequiredResources(id uint, requiredResources *list.List, db *gorm.DB) {
+func getRequiredResources(userId int, id uint, requiredResources *list.List, db *gorm.DB) {
 	var resource RequiredResourceResult
 	var query string = `SELECT r.id, r.name AS resource_name, ri.amount AS amount_required, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ri.amount AS FLOAT)/rcp.production_time_s*m.speed) rate FROM recipes rcp
 			JOIN recipes_inputs ri ON rcp.id = ri.recipes_id
 			JOIN resources r ON ri.resources_id = r.id
 			JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 			JOIN machines m ON mr.machines_id = m.id
-			WHERE rcp.id = ?;`
+			WHERE rcp.id = ? 
+			AND rcp.users_id = '` + fmt.Sprint(userId) + `'
+			AND ri.users_id = '` + fmt.Sprint(userId) + `'
+			AND r.users_id = '` + fmt.Sprint(userId) + `'
+			AND mr.users_id = '` + fmt.Sprint(userId) + `'
+			AND m.users_id = '` + fmt.Sprint(userId) + `';`
 	rows, err := db.Raw(query, id).Rows()
 	if err != nil {
 		panic(err.Error())
@@ -118,14 +156,19 @@ func getRequiredResources(id uint, requiredResources *list.List, db *gorm.DB) {
 	}
 }
 
-func getProducedResources(id uint, producedResources *list.List, db *gorm.DB) {
+func getProducedResources(userId int, id uint, producedResources *list.List, db *gorm.DB) {
 	var resource ProducedResourceResult
 	var query string = `SELECT r.id, r.name AS resource_name, ro.amount AS amount_produced, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ro.amount AS FLOAT)/rcp.production_time_s*m.speed) rate FROM recipes rcp
 			JOIN recipes_outputs ro ON rcp.id = ro.recipes_id
 			JOIN resources r ON ro.resources_id = r.id
 			JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 			JOIN machines m ON mr.machines_id = m.id
-			WHERE rcp.id = ?;`
+			WHERE rcp.id = ?
+			AND rcp.users_id = '` + fmt.Sprint(userId) + `'
+			AND ro.users_id = '` + fmt.Sprint(userId) + `'
+			AND r.users_id = '` + fmt.Sprint(userId) + `'
+			AND mr.users_id = '` + fmt.Sprint(userId) + `'
+			AND m.users_id = '` + fmt.Sprint(userId) + `';`
 	rows, err := db.Raw(query, id).Rows()
 	if err != nil {
 		panic(err.Error())
@@ -137,29 +180,34 @@ func getProducedResources(id uint, producedResources *list.List, db *gorm.DB) {
 	}
 }
 
-func findAndComputeBestrecipeForResource(desiredResourceName string, desiredRate float32, names []string, ProductionTreeNodes map[int]*ProductionTreeNode, ExcessResources *list.List, db *gorm.DB) int {
+func findAndComputeBestrecipeForResource(userId int, desiredResourceName string, desiredRate float32, names []string, ProductionTreeNodes map[int]*ProductionTreeNode, ExcessResources *list.List, db *gorm.DB) (int, error) {
 	//Finding best recipe
 	//fmt.Println(desiredResourceName)
 	var bestrecipe BestrecipeResult
 	var machinesRequired float32
 	var NewNode ProductionTreeNode = ProductionTreeNode{RequiredResourcesPerSecond: make(map[string]float32), ProducedResourcesPerSecond: make(map[string]float32)}
-	findBestrecipe(desiredResourceName, names, db, &bestrecipe)
+	var RequiredResourcesTemp = make(map[string]float32)
+	err := findBestrecipe(userId, desiredResourceName, names, db, &bestrecipe)
+	if err != nil {
+		return -1, fmt.Errorf("could not compute production chain for resource '%s': %w", desiredResourceName, err)
+	}
 	machinesRequired = desiredRate / bestrecipe.Rate
 	//Found best recipe for resource
 	//Finding required resources for best recipe
 	requiredResources := list.New()
 	producedResources := list.New()
-	getRequiredResources(bestrecipe.ID, requiredResources, db)
-	getProducedResources(bestrecipe.ID, producedResources, db)
+	getRequiredResources(userId, bestrecipe.ID, requiredResources, db)
+	getProducedResources(userId, bestrecipe.ID, producedResources, db)
 	//fmt.Println(ExcessResources.Front())
 	for e := requiredResources.Front(); e != nil; e = e.Next() {
 		//fmt.Println(requiredResources.Len(), ExcessResources.Front())
 		inserted := false
 		//fmt.Println(e.Value.(RequiredResourceResult).ResourceName)
+		NewNode.RequiredResourcesPerSecond[e.Value.(RequiredResourceResult).ResourceName] = e.Value.(RequiredResourceResult).Rate * machinesRequired
 		for ei := ExcessResources.Front(); ei != nil; ei = ei.Next() {
 			if ei.Value.(ResourceSource).ExcessResourceName == e.Value.(RequiredResourceResult).ResourceName {
 				if ei.Value.(ResourceSource).ExcessProducedResourcePerSecond < e.Value.(RequiredResourceResult).Rate*machinesRequired {
-					NewNode.RequiredResourcesPerSecond[e.Value.(RequiredResourceResult).ResourceName] = (e.Value.(RequiredResourceResult).Rate * machinesRequired) - ei.Value.(ResourceSource).ExcessProducedResourcePerSecond
+					RequiredResourcesTemp[e.Value.(RequiredResourceResult).ResourceName] = (e.Value.(RequiredResourceResult).Rate * machinesRequired) - ei.Value.(ResourceSource).ExcessProducedResourcePerSecond
 				} else if ei.Value.(ResourceSource).ExcessProducedResourcePerSecond >= e.Value.(RequiredResourceResult).Rate*machinesRequired {
 					newEiElement := ResourceSource{NodeId: ei.Value.(ResourceSource).NodeId, ExcessResourceName: ei.Value.(ResourceSource).ExcessResourceName, ExcessProducedResourcePerSecond: ei.Value.(ResourceSource).ExcessProducedResourcePerSecond - e.Value.(RequiredResourceResult).Rate*machinesRequired}
 					if newEiElement.ExcessProducedResourcePerSecond > 0 {
@@ -168,12 +216,12 @@ func findAndComputeBestrecipeForResource(desiredResourceName string, desiredRate
 				}
 				ExcessResources.Remove(ei)
 				inserted = true
-				NewNode.SourceNodes.PushBack(ei.Value.(ResourceSource).NodeId)
+				NewNode.SourceNodes = append(NewNode.SourceNodes, (ei.Value.(ResourceSource).NodeId))
 			}
 		}
 
 		if !inserted {
-			NewNode.RequiredResourcesPerSecond[e.Value.(RequiredResourceResult).ResourceName] = e.Value.(RequiredResourceResult).Rate * machinesRequired
+			RequiredResourcesTemp[e.Value.(RequiredResourceResult).ResourceName] = e.Value.(RequiredResourceResult).Rate * machinesRequired
 		}
 	}
 	for e := producedResources.Front(); e != nil; e = e.Next() {
@@ -193,11 +241,15 @@ func findAndComputeBestrecipeForResource(desiredResourceName string, desiredRate
 	NewNode.NodeId = len(ProductionTreeNodes)
 	ProductionTreeNodes[len(ProductionTreeNodes)] = &NewNode
 	//fmt.Println(NewNode.recipeName)
-	for resourceName, requiredAmount := range NewNode.RequiredResourcesPerSecond {
+	for resourceName, requiredAmount := range RequiredResourcesTemp {
 		if requiredAmount > 0 {
-			sourceNode := findAndComputeBestrecipeForResource(resourceName, requiredAmount, names, ProductionTreeNodes, ExcessResources, db)
-			NewNode.SourceNodes.PushBack(sourceNode)
+			var sourceNode int
+			sourceNode, err = findAndComputeBestrecipeForResource(userId, resourceName, requiredAmount, names, ProductionTreeNodes, ExcessResources, db)
+			if err != nil {
+				return -1, fmt.Errorf("could not compute production chain for resource '%s': %w", resourceName, err)
+			}
+			NewNode.SourceNodes = append(NewNode.SourceNodes, sourceNode)
 		}
 	}
-	return NewNode.NodeId
+	return NewNode.NodeId, nil
 }

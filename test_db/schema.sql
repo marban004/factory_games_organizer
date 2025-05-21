@@ -21,7 +21,8 @@ CREATE TABLE machines(
     inputs_liquid  integer,
     outputs_solid  integer,
     outputs_liquid integer,
-    speed          integer,
+    speed          real,
+    power_consumption_kw integer,
     default_choice integer,
     FOREIGN KEY(users_id) REFERENCES users(id)
 );
@@ -47,7 +48,7 @@ CREATE TABLE recipes(
 CREATE TABLE recipes_inputs(
     id                    integer PRIMARY KEY AUTOINCREMENT,
     users_id              integer,
-    recipes_id           integer,
+    recipes_id            integer,
     resources_id          integer,
     amount                integer,
     FOREIGN KEY(users_id) REFERENCES users(id),

@@ -45,5 +45,10 @@ SELECT rcp.id, rcp.name AS recipe_name, ro.amount AS amount_produced, rcp.produc
 							JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 							JOIN machines m ON mr.machines_id = m.id
 							WHERE r.name = 'iron_rod' AND (rcp.default_choice = TRUE OR rcp.name IN ())
+							AND rcp.users_id = '1'
+							AND ro.users_id = '1'
+							AND r.users_id = '1'
+							AND mr.users_id = '1'
+							AND m.users_id = '1'
                             ORDER BY rcp.default_choice, rate
 				            LIMIT 1;
