@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-sql-driver/mysql"
-	prototypes "github.com/marban004/factory_games_organizer.git/microservice_logic_calculator"
+	microservicelogiccalculator "github.com/marban004/factory_games_organizer.git/microservice_logic_calculator"
 )
 
 var desiredResourceName = "reinforced_iron_plate"
@@ -48,7 +48,7 @@ func main() {
 }
 
 func basicHandler(w http.ResponseWriter, r *http.Request) {
-	byteJSONRepresentation, err := prototypes.Calculate(userId, desiredResourceName, 0.5, altRecipies[:], db)
+	byteJSONRepresentation, err := microservicelogiccalculator.Calculate(userId, desiredResourceName, 0.5, altRecipies[:], db)
 	if err != nil {
 		fmt.Printf("Could not generate production tree for '%s', reason: %v \n", desiredResourceName, err)
 	}

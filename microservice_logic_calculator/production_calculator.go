@@ -1,4 +1,4 @@
-package prototypes
+package microservicelogiccalculator
 
 import (
 	"container/list"
