@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-sql-driver/mysql"
-	"github.com/marban004/factory_games_organizer.git/prototypes"
+	prototypes "github.com/marban004/factory_games_organizer.git/microservice_logic_calculator"
 )
 
 var desiredResourceName = "reinforced_iron_plate"
@@ -28,9 +30,14 @@ func main() {
 		panic(err.Error())
 	}
 
+	router := chi.NewRouter()
+
+	router.Use(middleware.Logger)
+	router.Get("/calculate", basicHandler)
+
 	server := &http.Server{
 		Addr:    ":3000",
-		Handler: http.HandlerFunc(basicHandler),
+		Handler: router,
 	}
 
 	err = server.ListenAndServe()
