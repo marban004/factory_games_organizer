@@ -1,26 +1,49 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"net/http"
 
-	"github.com/glebarez/sqlite"
+	"github.com/go-sql-driver/mysql"
 	"github.com/marban004/factory_games_organizer.git/prototypes"
-	"gorm.io/gorm"
 )
 
+var desiredResourceName = "reinforced_iron_plate"
+var userId = 1
+var altRecipies = [0]string{}
+var db *sql.DB
+var err error
+
 func main() {
-	var dbLocation = "F:\\Uczelnia\\PAW\\golang\\factory_games_organizer\\test_db\\test_data.db"
-	var desiredResourceName = "reinforced_iron_plate"
-	var userId = 1
-	db, err := gorm.Open(sqlite.Open(dbLocation), &gorm.Config{})
+	cfg := mysql.NewConfig()
+	cfg.User = "calculator_microservice"
+	cfg.Passwd = "yixnhg64G0.*hafc2^"
+	cfg.Net = "tcp"
+	cfg.Addr = "127.0.0.1:3306"
+	cfg.DBName = "users_data"
+
+	db, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		panic(err.Error())
 	}
-	var altRecipies = [0]string{}
+
+	server := &http.Server{
+		Addr:    ":3000",
+		Handler: http.HandlerFunc(basicHandler),
+	}
+
+	err = server.ListenAndServe()
+	if err != nil {
+		fmt.Println("failed to listen to server:", err)
+	}
+
+}
+
+func basicHandler(w http.ResponseWriter, r *http.Request) {
 	byteJSONRepresentation, err := prototypes.Calculate(userId, desiredResourceName, 0.5, altRecipies[:], db)
 	if err != nil {
 		fmt.Printf("Could not generate production tree for '%s', reason: %v \n", desiredResourceName, err)
 	}
-	fmt.Println(string(byteJSONRepresentation))
-	fmt.Println("done")
+	w.Write(byteJSONRepresentation)
 }
