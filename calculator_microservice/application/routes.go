@@ -8,7 +8,7 @@ import (
 	"github.com/marban004/factory_games_organizer/calculator_microservice/handler"
 )
 
-func loadRoutes() *chi.Mux {
+func (a *AppCalculator) loadRoutes() {
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
@@ -16,12 +16,14 @@ func loadRoutes() *chi.Mux {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	router.Route("/calculate", loadCalculateRoutes)
+	router.Route("/calculate", a.loadCalculateRoutes)
 
-	return router
+	a.router = router
 }
 
-func loadCalculateRoutes(router chi.Router) {
-	calculatorHandler := &handler.Calculator{}
+func (a *AppCalculator) loadCalculateRoutes(router chi.Router) {
+	calculatorHandler := &handler.Calculator{
+		DB: a.db,
+	}
 	router.Get("/", calculatorHandler.Calculate)
 }

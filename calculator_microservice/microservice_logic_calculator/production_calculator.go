@@ -2,6 +2,7 @@ package microservicelogiccalculator
 
 import (
 	"container/list"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -17,6 +18,7 @@ type BestrecipeResult struct {
 	MachineSpeed            uint
 	Rate                    float32
 	MachinePowerConsumption uint64
+	MachineId               uint
 }
 
 type RequiredResourceResult struct {
@@ -64,11 +66,11 @@ type ProductionTree struct {
 	ExcessResources          []*ResourceSource
 }
 
-func Calculate(userId int, desiredResourceName string, desiredRate float32, names []string, db *sql.DB) ([]byte, error) {
+func Calculate(ctx context.Context, userId int, desiredResourceName string, desiredRate float32, recipes_names []string, machines_names []string, db *sql.DB) ([]byte, error) {
 	excessResources := list.New()
 	calculationResult := ProductionTree{TreeNodes: make([]*ProductionTreeNode, 0), ExcessResources: make([]*ResourceSource, excessResources.Len())}
 	var err error
-	calculationResult.TargetResourceSourceNode, err = findAndComputeBestrecipeForResource(userId, desiredResourceName, desiredRate, names, &calculationResult.TreeNodes, excessResources, db)
+	calculationResult.TargetResourceSourceNode, err = findAndComputeBestrecipeForResource(ctx, userId, desiredResourceName, desiredRate, recipes_names, machines_names, &calculationResult.TreeNodes, excessResources, db)
 	if err != nil {
 		return nil, fmt.Errorf("could not compute production chain for resource '%s': %w", desiredResourceName, err)
 	}
@@ -76,6 +78,7 @@ func Calculate(userId int, desiredResourceName string, desiredRate float32, name
 		newEntry := ResourceSource{NodeId: e.Value.(ResourceSource).NodeId, ExcessResourceName: e.Value.(ResourceSource).ExcessResourceName, ExcessProducedResourcePerSecond: e.Value.(ResourceSource).ExcessProducedResourcePerSecond}
 		calculationResult.ExcessResources = append(calculationResult.ExcessResources, &newEntry)
 	}
+	calculationResult.TargetResource = desiredResourceName
 	calculationResult.TargetResourceRate = desiredRate
 	byteJSONRepresentation, err := json.Marshal(calculationResult)
 	if err != nil {
@@ -84,19 +87,31 @@ func Calculate(userId int, desiredResourceName string, desiredRate float32, name
 	return byteJSONRepresentation, nil
 }
 
-func findBestrecipe(userId int, desiredResourceName string, names []string, db *sql.DB, bestrecipe *BestrecipeResult) error {
-	var query string = `SELECT rcp.id, rcp.name AS recipe_name, ro.amount AS amount_produced, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ro.amount AS FLOAT)/rcp.production_time_s*m.speed) rate, m.power_consumption_kw AS machine_power_consumption
+func findBestrecipe(ctx context.Context, userId int, desiredResourceName string, recipes_names []string, machines_names []string, db *sql.DB, bestrecipe *BestrecipeResult) error {
+	var query string = `SELECT rcp.id, rcp.name AS recipe_name, ro.amount AS amount_produced, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ro.amount AS FLOAT)/rcp.production_time_s*m.speed) rate, m.power_consumption_kw AS machine_power_consumption, m.id AS machine_id
 							FROM recipes rcp
 							JOIN recipes_outputs ro ON rcp.id = ro.recipes_id
 							JOIN resources r ON ro.resources_id = r.id
 							JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 							JOIN machines m ON mr.machines_id = m.id
 							WHERE r.name = '` + desiredResourceName + `'`
-	if len(names) == 0 {
+	if len(recipes_names) == 0 {
 		query += ` AND rcp.default_choice = TRUE `
 	} else {
 		query += " AND (rcp.default_choice = TRUE OR rcp.name IN ("
-		for i, name := range names {
+		for i, name := range recipes_names {
+			if i != 0 {
+				query += ","
+			}
+			query += "'" + name + "'"
+		}
+		query += ")) "
+	}
+	if len(machines_names) == 0 {
+		query += ` AND m.default_choice = TRUE `
+	} else {
+		query += " AND (m.default_choice = TRUE OR m.name IN ("
+		for i, name := range machines_names {
 			if i != 0 {
 				query += ","
 			}
@@ -111,7 +126,7 @@ func findBestrecipe(userId int, desiredResourceName string, names []string, db *
 			AND m.users_id = '` + fmt.Sprint(userId) + `'
 			ORDER BY rcp.default_choice, rate DESC
 			LIMIT 1;`
-	err := db.QueryRow(query).Scan(&(*bestrecipe).ID, &(*bestrecipe).RecipeName, &(*bestrecipe).AmountProduced, &(*bestrecipe).ProductionTime, &(*bestrecipe).MachineName, &(*bestrecipe).MachineSpeed, &(*bestrecipe).Rate, &(*bestrecipe).MachinePowerConsumption)
+	err := db.QueryRowContext(ctx, query).Scan(&(*bestrecipe).ID, &(*bestrecipe).RecipeName, &(*bestrecipe).AmountProduced, &(*bestrecipe).ProductionTime, &(*bestrecipe).MachineName, &(*bestrecipe).MachineSpeed, &(*bestrecipe).Rate, &(*bestrecipe).MachinePowerConsumption, &(*bestrecipe).MachineId)
 	if errors.Is(err, sql.ErrNoRows) {
 		return fmt.Errorf("could not find recipe for '%s'", desiredResourceName)
 	}
@@ -121,20 +136,21 @@ func findBestrecipe(userId int, desiredResourceName string, names []string, db *
 	return nil
 }
 
-func getRequiredResources(userId int, id uint, requiredResources *list.List, db *sql.DB) error {
+func getRequiredResources(ctx context.Context, userId int, recipe_id uint, machine_id uint, requiredResources *list.List, db *sql.DB) error {
 	var resource RequiredResourceResult
 	var query string = `SELECT r.id, r.name AS resource_name, ri.amount AS amount_required, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ri.amount AS FLOAT)/rcp.production_time_s*m.speed) rate FROM recipes rcp
 			JOIN recipes_inputs ri ON rcp.id = ri.recipes_id
 			JOIN resources r ON ri.resources_id = r.id
 			JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 			JOIN machines m ON mr.machines_id = m.id
-			WHERE rcp.id = ? 
+			WHERE rcp.id = ?
+			AND m.id = ? 
 			AND rcp.users_id = '` + fmt.Sprint(userId) + `'
 			AND ri.users_id = '` + fmt.Sprint(userId) + `'
 			AND r.users_id = '` + fmt.Sprint(userId) + `'
 			AND mr.users_id = '` + fmt.Sprint(userId) + `'
 			AND m.users_id = '` + fmt.Sprint(userId) + `';`
-	rows, err := db.Query(query, id)
+	rows, err := db.QueryContext(ctx, query, recipe_id, machine_id)
 	if err != nil {
 		return err
 	}
@@ -156,7 +172,7 @@ func getRequiredResources(userId int, id uint, requiredResources *list.List, db 
 	return nil
 }
 
-func getProducedResources(userId int, id uint, producedResources *list.List, db *sql.DB) error {
+func getProducedResources(ctx context.Context, userId int, recipe_id uint, machine_id uint, producedResources *list.List, db *sql.DB) error {
 	var resource ProducedResourceResult
 	var query string = `SELECT r.id, r.name AS resource_name, ro.amount AS amount_produced, rcp.production_time_s AS production_time, m.name AS machine_name, m.speed as machine_speed, (CAST(ro.amount AS FLOAT)/rcp.production_time_s*m.speed) rate FROM recipes rcp
 			JOIN recipes_outputs ro ON rcp.id = ro.recipes_id
@@ -164,12 +180,13 @@ func getProducedResources(userId int, id uint, producedResources *list.List, db 
 			JOIN machines_recipes mr ON rcp.id = mr.recipes_id
 			JOIN machines m ON mr.machines_id = m.id
 			WHERE rcp.id = ?
+			AND m.id = ?
 			AND rcp.users_id = '` + fmt.Sprint(userId) + `'
 			AND ro.users_id = '` + fmt.Sprint(userId) + `'
 			AND r.users_id = '` + fmt.Sprint(userId) + `'
 			AND mr.users_id = '` + fmt.Sprint(userId) + `'
 			AND m.users_id = '` + fmt.Sprint(userId) + `';`
-	rows, err := db.Query(query, id)
+	rows, err := db.QueryContext(ctx, query, recipe_id, machine_id)
 	if err != nil {
 		return err
 	}
@@ -188,23 +205,23 @@ func getProducedResources(userId int, id uint, producedResources *list.List, db 
 	return nil
 }
 
-func findAndComputeBestrecipeForResource(userId int, desiredResourceName string, desiredRate float32, names []string, ProductionTreeNodes *[]*ProductionTreeNode, ExcessResources *list.List, db *sql.DB) (int, error) {
+func findAndComputeBestrecipeForResource(ctx context.Context, userId int, desiredResourceName string, desiredRate float32, recipes_names []string, machines_names []string, ProductionTreeNodes *[]*ProductionTreeNode, ExcessResources *list.List, db *sql.DB) (int, error) {
 	var bestrecipe BestrecipeResult
 	var machinesRequired float32
 	var NewNode ProductionTreeNode = ProductionTreeNode{RequiredResourcesPerSecond: make(map[string]float32), ProducedResourcesPerSecond: make(map[string]float32)}
 	var RequiredResourcesTemp = make(map[string]float32)
-	err := findBestrecipe(userId, desiredResourceName, names, db, &bestrecipe)
+	err := findBestrecipe(ctx, userId, desiredResourceName, recipes_names, machines_names, db, &bestrecipe)
 	if err != nil {
 		return -1, fmt.Errorf("could not compute production chain for resource '%s': %w", desiredResourceName, err)
 	}
 	machinesRequired = desiredRate / bestrecipe.Rate
 	requiredResources := list.New()
 	producedResources := list.New()
-	err = getRequiredResources(userId, bestrecipe.ID, requiredResources, db)
+	err = getRequiredResources(ctx, userId, bestrecipe.ID, bestrecipe.MachineId, requiredResources, db)
 	if err != nil {
 		return -1, fmt.Errorf("could not find required resources for recipe '%s': %w", bestrecipe.RecipeName, err)
 	}
-	err = getProducedResources(userId, bestrecipe.ID, producedResources, db)
+	err = getProducedResources(ctx, userId, bestrecipe.ID, bestrecipe.MachineId, producedResources, db)
 	if err != nil {
 		return -1, fmt.Errorf("could not find produced resources for recipe '%s': %w", bestrecipe.RecipeName, err)
 	}
@@ -250,7 +267,7 @@ func findAndComputeBestrecipeForResource(userId int, desiredResourceName string,
 	for resourceName, requiredAmount := range RequiredResourcesTemp {
 		if requiredAmount > 0 {
 			var sourceNode int
-			sourceNode, err = findAndComputeBestrecipeForResource(userId, resourceName, requiredAmount, names, ProductionTreeNodes, ExcessResources, db)
+			sourceNode, err = findAndComputeBestrecipeForResource(ctx, userId, resourceName, requiredAmount, recipes_names, machines_names, ProductionTreeNodes, ExcessResources, db)
 			if err != nil {
 				return -1, fmt.Errorf("could not compute production chain for resource '%s': %w", resourceName, err)
 			}

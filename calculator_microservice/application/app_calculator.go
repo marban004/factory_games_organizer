@@ -13,19 +13,21 @@ import (
 type AppCalculator struct {
 	router http.Handler
 	db     *sql.DB
+	config Config
 }
 
-func New() *AppCalculator {
+func New(config Config) *AppCalculator {
 	app := &AppCalculator{
-		router: loadRoutes(),
-		db:     loadDB(),
+		config: config,
 	}
+	app.loadDB()
+	app.loadRoutes()
 	return app
 }
 
 func (a *AppCalculator) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    ":3000",
+		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
 		Handler: a.router,
 	}
 
@@ -55,22 +57,23 @@ func (a *AppCalculator) Start(ctx context.Context) error {
 	case err = <-ch:
 		return err
 	case <-ctx.Done():
+		fmt.Println("Shutting down server")
 		timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		return server.Shutdown(timeout)
 	}
 }
 
-func loadDB() *sql.DB {
+func (a *AppCalculator) loadDB() {
 	cfg := mysql.NewConfig()
 	cfg.User = "calculator_microservice"
 	cfg.Passwd = "yixnhg64G0.*hafc2^"
 	cfg.Net = "tcp"
-	cfg.Addr = "127.0.0.1:3306"
+	cfg.Addr = a.config.DbAddress
 	cfg.DBName = "users_data"
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		panic(err)
 	}
-	return db
+	a.db = db
 }
