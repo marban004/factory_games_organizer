@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/marban004/factory_games_organizer/calculator_microservice/handler"
+	"github.com/marban004/factory_games_organizer/handler"
 )
 
 func (a *AppCalculator) loadRoutes() {

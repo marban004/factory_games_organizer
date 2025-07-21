@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/marban004/factory_games_organizer/calculator_microservice/application"
+	"github.com/marban004/factory_games_organizer/application"
 )
 
 func main() {

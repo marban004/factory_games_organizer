@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
-	microservicelogiccalculator "github.com/marban004/factory_games_organizer/calculator_microservice/microservice_logic_calculator"
+	microservicelogiccalculator "github.com/marban004/factory_games_organizer/microservice_logic_calculator"
 )
 
 type Calculator struct {

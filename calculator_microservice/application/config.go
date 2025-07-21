@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -17,10 +18,12 @@ func LoadConfig() Config {
 	}
 	if dbAddr, exists := os.LookupEnv("MYSQL_ADDR"); exists {
 		cfg.DbAddress = dbAddr
+		fmt.Println("Found db address:", cfg.DbAddress)
 	}
 	if serverPort, exists := os.LookupEnv("PORT"); exists {
 		if port, err := strconv.ParseUint(serverPort, 10, 16); err == nil {
 			cfg.ServerPort = uint16(port)
+			fmt.Println("Found server port:", cfg.ServerPort)
 		}
 	}
 	return cfg
