@@ -1,0 +1,28 @@
+{
+    "machinesList":[
+        {
+            "id":5,
+            "name":"liquifier_1",
+            "usersId":1,
+            "inputsSolid":1,
+            "inputsLiquid":0,
+            "outputsSolid":0,
+            "outputsLiquid":1,
+            "speed":1.5,
+            "powerConsumptionKw":1000,
+            "defaultChoice":1
+        },
+            {
+            "id":6,
+            "name":"liquifier_2",
+            "usersId":1,
+            "inputsSolid":1,
+            "inputsLiquid":0,
+            "outputsSolid":0,
+            "outputsLiquid":1,
+            "speed":2,
+            "powerConsumptionKw":2000,
+            "defaultChoice":0
+        }
+    ]
+}
