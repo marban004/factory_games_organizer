@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -28,12 +29,20 @@ func main() {
 	}
 	data := prototypes.JSONInput{}
 	json.Unmarshal(jsonFileBytes, &data)
-	fmt.Printf("%+v", data)
+	fmt.Printf("%+v\n", data)
 	result, err := prototypes.InsertMachines(context.Background(), db, data.MachinesList)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(result.RowsAffected())
+
+	result, err = prototypes.InsertResources(context.Background(), db, data.ResourcesList)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(result.RowsAffected())
+
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
 
 	jsonFileBytes, err = os.ReadFile("prototypes/test_update.json")
 	if err != nil {
@@ -46,13 +55,30 @@ func main() {
 		panic(err)
 	}
 	for _, result := range resultList {
-		fmt.Println(result)
+		fmt.Println(result.RowsAffected())
 	}
+	resultList, err = prototypes.UpdateResources(context.Background(), db, data.ResourcesList)
+	if err != nil {
+		panic(err)
+	}
+	for _, result := range resultList {
+		fmt.Println(result.RowsAffected())
+	}
+
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+
 	ids := []int{5, 6}
 	result, err = prototypes.DeleteMachines(context.Background(), db, ids)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(result.RowsAffected()) //manually use "ALTER TABLE machines AUTO_INCREMENT = 4;" User crud_microservice cannot modify table structures (no ALTER privilege)
+	fmt.Println(result.RowsAffected()) //relod data by executing schema_mysql.sql, then data_mysql.sql to reset all auto increment sequences
+
+	ids = []int{7, 8}
+	result, err = prototypes.DeleteResources(context.Background(), db, ids)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(result.RowsAffected())
 	db.Close()
 }

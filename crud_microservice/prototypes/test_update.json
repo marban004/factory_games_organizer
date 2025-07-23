@@ -24,5 +24,21 @@
             "powerConsumptionKw":2000,
             "defaultChoice":0
         }
+    ],
+        "resourcesList":[
+        {
+            "id":7,
+            "name":"cobalt",
+            "usersId":1,
+            "liquid":0,
+            "resourceUnit":""
+        },
+        {
+            "id":8,
+            "name":"molten_cobalt",
+            "usersId":1,
+            "liquid":1,
+            "resourceUnit":"litre"
+        }
     ]
 }

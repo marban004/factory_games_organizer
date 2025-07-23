@@ -24,5 +24,21 @@
             "powerConsumptionKw":2000,
             "defaultChoice":0
         }
+    ],
+    "resourcesList":[
+        {
+            "id":7,
+            "name":"test_resource_1",
+            "usersId":1,
+            "liquid":0,
+            "resourceUnit":""
+        },
+        {
+            "id":8,
+            "name":"test_resource_2",
+            "usersId":1,
+            "liquid":1,
+            "resourceUnit":"litre"
+        }
     ]
 }

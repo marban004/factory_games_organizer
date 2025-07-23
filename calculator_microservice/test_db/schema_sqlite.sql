@@ -28,11 +28,11 @@ CREATE TABLE machines(
 );
 
 CREATE TABLE resources(
-    id             integer PRIMARY KEY AUTOINCREMENT,
-    name           text,
-    users_id       integer,
-    liquid         integer,
-    resurce_unit   text,
+    id              integer PRIMARY KEY AUTOINCREMENT,
+    name            text,
+    users_id        integer,
+    liquid          integer,
+    resource_unit   text,
     FOREIGN KEY(users_id) REFERENCES users(id)
 );
 
