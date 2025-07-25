@@ -2,7 +2,7 @@
     "machinesList":[
         {
             "id":5,
-            "name":"liquifier_1",
+            "name":"test_machine_1",
             "usersId":1,
             "inputsSolid":1,
             "inputsLiquid":0,
@@ -14,7 +14,7 @@
         },
             {
             "id":6,
-            "name":"liquifier_2",
+            "name":"test_machine_2",
             "usersId":1,
             "inputsSolid":1,
             "inputsLiquid":0,
@@ -25,20 +25,36 @@
             "defaultChoice":0
         }
     ],
-        "resourcesList":[
+    "resourcesList":[
         {
             "id":7,
-            "name":"cobalt",
+            "name":"test_resource_1",
             "usersId":1,
             "liquid":0,
             "resourceUnit":""
         },
         {
             "id":8,
-            "name":"molten_cobalt",
+            "name":"test_resource_2",
             "usersId":1,
             "liquid":1,
             "resourceUnit":"litre"
+        }
+    ],
+    "recipesList":[
+        {
+            "id":7,
+            "name":"test_recipe_1",
+            "usersId":1,
+            "productionTimeS":60,
+            "defaultChoice":0
+        },
+        {
+            "id":8,
+            "name":"test_recipe_2",
+            "usersId":1,
+            "productionTimeS":30,
+            "defaultChoice":1
         }
     ]
 }

@@ -27,16 +27,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	data := prototypes.JSONInput{}
-	json.Unmarshal(jsonFileBytes, &data)
-	fmt.Printf("%+v\n", data)
-	result, err := prototypes.InsertMachines(context.Background(), db, data.MachinesList)
+	input := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &input)
+	fmt.Printf("%+v\n", input)
+	result, err := prototypes.InsertMachines(context.Background(), db, input.MachinesList)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(result.RowsAffected())
 
-	result, err = prototypes.InsertResources(context.Background(), db, data.ResourcesList)
+	result, err = prototypes.InsertResources(context.Background(), db, input.ResourcesList)
 	if err != nil {
 		panic(err)
 	}
@@ -48,16 +48,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	data = prototypes.JSONInput{}
-	json.Unmarshal(jsonFileBytes, &data)
-	resultList, err := prototypes.UpdateMachines(context.Background(), db, data.MachinesList)
+	update := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &update)
+	resultList, err := prototypes.UpdateMachines(context.Background(), db, update.MachinesList)
 	if err != nil {
 		panic(err)
 	}
 	for _, result := range resultList {
 		fmt.Println(result.RowsAffected())
 	}
-	resultList, err = prototypes.UpdateResources(context.Background(), db, data.ResourcesList)
+	resultList, err = prototypes.UpdateResources(context.Background(), db, update.ResourcesList)
 	if err != nil {
 		panic(err)
 	}
@@ -82,3 +82,5 @@ func main() {
 	fmt.Println(result.RowsAffected())
 	db.Close()
 }
+
+// ctx context.Context, db *sql.DB, input prototypes.JSONInput, update prototypes.JSONInput, ids []int

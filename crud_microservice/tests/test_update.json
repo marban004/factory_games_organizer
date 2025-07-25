@@ -1,8 +1,8 @@
 {
     "machinesList":[
         {
-            "id":5,
-            "name":"test_machine_1",
+            "id":3,
+            "name":"liquifier_1",
             "usersId":1,
             "inputsSolid":1,
             "inputsLiquid":0,
@@ -13,8 +13,8 @@
             "defaultChoice":1
         },
             {
-            "id":6,
-            "name":"test_machine_2",
+            "id":4,
+            "name":"liquifier_2",
             "usersId":1,
             "inputsSolid":1,
             "inputsLiquid":0,
@@ -27,18 +27,34 @@
     ],
     "resourcesList":[
         {
-            "id":7,
-            "name":"test_resource_1",
+            "id":5,
+            "name":"cobalt",
             "usersId":1,
             "liquid":0,
             "resourceUnit":""
         },
         {
-            "id":8,
-            "name":"test_resource_2",
+            "id":6,
+            "name":"molten_cobalt",
             "usersId":1,
             "liquid":1,
             "resourceUnit":"litre"
+        }
+    ],
+    "recipesList":[
+        {
+            "id":5,
+            "name":"folding_iron",
+            "usersId":1,
+            "productionTimeS":30,
+            "defaultChoice":1
+        },
+        {
+            "id":6,
+            "name":"folding_plastic",
+            "usersId":1,
+            "productionTimeS":15,
+            "defaultChoice":1
         }
     ]
 }
