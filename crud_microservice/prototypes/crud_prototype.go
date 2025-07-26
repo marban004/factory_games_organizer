@@ -36,10 +36,20 @@ type RecipeInfo struct {
 	DefaultChoice   uint8
 }
 
+type RecipeInputOutputInfo struct {
+	Id          uint
+	UsersId     uint
+	RecipesId   uint
+	ResourcesId uint
+	Amount      uint
+}
+
 type JSONInput struct {
-	MachinesList  []MachineInfo
-	ResourcesList []ResourceInfo
-	RecipesList   []RecipeInfo
+	MachinesList       []MachineInfo
+	ResourcesList      []ResourceInfo
+	RecipesList        []RecipeInfo
+	RecipesInputsList  []RecipeInputOutputInfo
+	RecipesOutputsList []RecipeInputOutputInfo
 }
 
 func SelectMachines(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]MachineInfo, error) {
@@ -263,6 +273,156 @@ func UpdateRecipes(ctx context.Context, db *sql.DB, data []RecipeInfo) ([]sql.Re
 	for _, entry := range data {
 		query := fmt.Sprintf("UPDATE recipes SET name='%s', production_time_s=%d, default_choice='%d' WHERE id=%d;",
 			entry.Name, entry.ProductionTimeS, entry.DefaultChoice, entry.Id)
+		result, err := db.ExecContext(ctx, query)
+		results = append(results, result)
+		if err != nil {
+			return results, fmt.Errorf("data has not been fully updated: %w", err)
+		}
+	}
+	return results, nil
+}
+
+func SelectRecipesInputs(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM Recipes_inputs WHERE id >= " + strconv.Itoa(startId)
+	if rowsRet > 0 {
+		query += " LIMIT " + strconv.Itoa(rowsRet)
+	}
+	query += ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []RecipeInputOutputInfo
+	for result.Next() {
+		var row RecipeInputOutputInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.ResourcesId, &row.Amount)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
+func InsertRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) (sql.Result, error) {
+	query := "INSERT INTO recipes_inputs(users_id, recipes_id, resources_id, amount) VALUES"
+	for i, entry := range data {
+		if i != 0 {
+			query += ","
+		}
+		query += ` ("` + fmt.Sprint(entry.UsersId) +
+			`", ` + fmt.Sprint(entry.RecipesId) +
+			`, ` + fmt.Sprint(entry.ResourcesId) +
+			`, "` + fmt.Sprint(entry.Amount) + `")`
+	}
+	query += ";"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been inserted: %w", err)
+	}
+	return result, nil
+}
+
+func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+	query := "DELETE FROM recipes_inputs WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ");"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been deleted: %w", err)
+	}
+	return result, nil
+}
+
+func UpdateRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) ([]sql.Result, error) {
+	results := []sql.Result{}
+	for _, entry := range data {
+		query := fmt.Sprintf("UPDATE recipes_inputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d;",
+			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id)
+		result, err := db.ExecContext(ctx, query)
+		results = append(results, result)
+		if err != nil {
+			return results, fmt.Errorf("data has not been fully updated: %w", err)
+		}
+	}
+	return results, nil
+}
+
+func SelectRecipesOutputs(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM Recipes_outputs WHERE id >= " + strconv.Itoa(startId)
+	if rowsRet > 0 {
+		query += " LIMIT " + strconv.Itoa(rowsRet)
+	}
+	query += ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []RecipeInputOutputInfo
+	for result.Next() {
+		var row RecipeInputOutputInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.ResourcesId, &row.Amount)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
+func InsertRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) (sql.Result, error) {
+	query := "INSERT INTO recipes_outputs(users_id, recipes_id, resources_id, amount) VALUES"
+	for i, entry := range data {
+		if i != 0 {
+			query += ","
+		}
+		query += ` ("` + fmt.Sprint(entry.UsersId) +
+			`", ` + fmt.Sprint(entry.RecipesId) +
+			`, ` + fmt.Sprint(entry.ResourcesId) +
+			`, "` + fmt.Sprint(entry.Amount) + `")`
+	}
+	query += ";"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been inserted: %w", err)
+	}
+	return result, nil
+}
+
+func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+	query := "DELETE FROM recipes_outputs WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ");"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been deleted: %w", err)
+	}
+	return result, nil
+}
+
+func UpdateRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) ([]sql.Result, error) {
+	results := []sql.Result{}
+	for _, entry := range data {
+		query := fmt.Sprintf("UPDATE recipes_outputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d;",
+			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {

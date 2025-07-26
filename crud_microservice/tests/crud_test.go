@@ -284,6 +284,169 @@ func (uts *UnitTestSuite) TestDeleteRecipes() {
 	uts.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
 }
 
+func (uts *UnitTestSuite) TestSelectRecipesInputs() {
+
+	expectedRows := []prototypes.RecipeInputOutputInfo{
+		{Id: 1, UsersId: 1, RecipesId: 2, ResourcesId: 1, Amount: 30},
+		{Id: 2, UsersId: 1, RecipesId: 3, ResourcesId: 2, Amount: 30},
+		{Id: 3, UsersId: 1, RecipesId: 4, ResourcesId: 2, Amount: 15},
+		{Id: 4, UsersId: 1, RecipesId: 5, ResourcesId: 4, Amount: 10},
+		{Id: 5, UsersId: 1, RecipesId: 6, ResourcesId: 3, Amount: 30},
+		{Id: 6, UsersId: 1, RecipesId: 6, ResourcesId: 5, Amount: 60},
+	}
+	returnedRows, err := prototypes.SelectRecipesInputs(context.Background(), uts.db, 0, 0)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestInsertRecipesInputs() {
+	jsonFileBytes, err := os.ReadFile("test_input.json")
+	if err != nil {
+		uts.FailNowf("failed to read file", err.Error())
+	}
+	input := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &input)
+
+	result, err := prototypes.InsertRecipesInputs(context.Background(), uts.db, input.RecipesInputsList)
+	uts.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	uts.Nil(err)
+	uts.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesInputs(context.Background(), uts.db, 7, 2)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, input.RecipesInputsList, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestUpdateRecipesInputs() {
+	jsonFileBytes, err := os.ReadFile("test_update.json")
+	if err != nil {
+		uts.FailNowf("failed to read file", err.Error())
+	}
+	update := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &update)
+
+	resultArr, err := prototypes.UpdateRecipesInputs(context.Background(), uts.db, update.RecipesInputsList)
+	uts.Nil(err)
+
+	rowsChanged := int64(0)
+	for _, result := range resultArr {
+		temp, err := result.RowsAffected()
+		uts.Nil(err)
+		rowsChanged += temp
+	}
+
+	uts.Nil(err)
+	uts.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesInputs(context.Background(), uts.db, 3, 2)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, update.RecipesInputsList, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestDeleteRecipesInputs() {
+	expectedRows := []prototypes.RecipeInputOutputInfo{
+		{Id: 2, UsersId: 1, RecipesId: 3, ResourcesId: 2, Amount: 30},
+		{Id: 3, UsersId: 1, RecipesId: 4, ResourcesId: 2, Amount: 15},
+		{Id: 4, UsersId: 1, RecipesId: 5, ResourcesId: 4, Amount: 10},
+		{Id: 5, UsersId: 1, RecipesId: 6, ResourcesId: 3, Amount: 30},
+	}
+	ids := []int{1, 6}
+	result, err := prototypes.DeleteRecipesInputs(context.Background(), uts.db, ids)
+	uts.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	uts.Nil(err)
+	uts.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesInputs(context.Background(), uts.db, 0, 0)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestSelectRecipesOutputs() {
+
+	expectedRows := []prototypes.RecipeInputOutputInfo{
+		{Id: 1, UsersId: 1, RecipesId: 1, ResourcesId: 1, Amount: 60},
+		{Id: 2, UsersId: 1, RecipesId: 2, ResourcesId: 2, Amount: 30},
+		{Id: 3, UsersId: 1, RecipesId: 3, ResourcesId: 3, Amount: 20},
+		{Id: 4, UsersId: 1, RecipesId: 4, ResourcesId: 4, Amount: 15},
+		{Id: 5, UsersId: 1, RecipesId: 5, ResourcesId: 5, Amount: 40},
+		{Id: 6, UsersId: 1, RecipesId: 6, ResourcesId: 6, Amount: 5},
+	}
+	returnedRows, err := prototypes.SelectRecipesOutputs(context.Background(), uts.db, 0, 0)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestInsertRecipesOutputs() {
+	jsonFileBytes, err := os.ReadFile("test_input.json")
+	if err != nil {
+		uts.FailNowf("failed to read file", err.Error())
+	}
+	input := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &input)
+
+	result, err := prototypes.InsertRecipesOutputs(context.Background(), uts.db, input.RecipesOutputsList)
+	uts.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	uts.Nil(err)
+	uts.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesOutputs(context.Background(), uts.db, 7, 2)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, input.RecipesOutputsList, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestUpdateRecipesOutputs() {
+	jsonFileBytes, err := os.ReadFile("test_update.json")
+	if err != nil {
+		uts.FailNowf("failed to read file", err.Error())
+	}
+	update := prototypes.JSONInput{}
+	json.Unmarshal(jsonFileBytes, &update)
+
+	resultArr, err := prototypes.UpdateRecipesOutputs(context.Background(), uts.db, update.RecipesOutputsList)
+	uts.Nil(err)
+
+	rowsChanged := int64(0)
+	for _, result := range resultArr {
+		temp, err := result.RowsAffected()
+		uts.Nil(err)
+		rowsChanged += temp
+	}
+
+	uts.Nil(err)
+	uts.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesOutputs(context.Background(), uts.db, 4, 2)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, update.RecipesOutputsList, "The returned and expected values don't match")
+}
+
+func (uts *UnitTestSuite) TestDeleteRecipesOutputs() {
+	expectedRows := []prototypes.RecipeInputOutputInfo{
+		{Id: 1, UsersId: 1, RecipesId: 1, ResourcesId: 1, Amount: 60},
+		{Id: 2, UsersId: 1, RecipesId: 2, ResourcesId: 2, Amount: 30},
+		{Id: 3, UsersId: 1, RecipesId: 3, ResourcesId: 3, Amount: 20},
+		{Id: 4, UsersId: 1, RecipesId: 4, ResourcesId: 4, Amount: 15},
+		{Id: 5, UsersId: 1, RecipesId: 5, ResourcesId: 5, Amount: 40},
+	}
+	ids := []int{6}
+	result, err := prototypes.DeleteRecipesOutputs(context.Background(), uts.db, ids)
+	uts.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	uts.Nil(err)
+	uts.Equal(int64(1), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := prototypes.SelectRecipesOutputs(context.Background(), uts.db, 0, 0)
+	uts.Nil(err)
+	uts.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
 func setupDatabaseSchema(uts *UnitTestSuite) {
 	uts.T().Log("setting up database schema")
 	_, err := uts.db.Exec(`CREATE DATABASE users_data_test`)

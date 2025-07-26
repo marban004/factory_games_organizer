@@ -56,5 +56,37 @@
             "productionTimeS":30,
             "defaultChoice":1
         }
+    ],
+    "recipesInputsList":[
+        {
+            "id":7,
+            "usersId":1,
+            "recipesId":4,
+            "resourcesId":6,
+            "amount":120
+        },
+        {
+            "id":8,
+            "usersId":1,
+            "recipesId":5,
+            "resourcesId":1,
+            "amount":15
+        }
+    ],
+    "recipesOutputsList":[
+        {
+            "id":7,
+            "usersId":1,
+            "recipesId":1,
+            "resourcesId":2,
+            "amount":10
+        },
+        {
+            "id":8,
+            "usersId":1,
+            "recipesId":5,
+            "resourcesId":4,
+            "amount":15
+        }
     ]
 }
