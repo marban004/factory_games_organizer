@@ -20,6 +20,7 @@ func main() {
 	cfg.Addr = "127.0.0.1:3306"
 	cfg.DBName = "users_data"
 	db, err := sql.Open("mysql", cfg.FormatDSN())
+	userId := 1
 	if err != nil {
 		panic(err)
 	}
@@ -68,14 +69,14 @@ func main() {
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 
 	ids := []int{5, 6}
-	result, err = prototypes.DeleteMachines(context.Background(), db, ids)
+	result, err = prototypes.DeleteMachines(context.Background(), db, ids, userId)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(result.RowsAffected()) //relod data by executing schema_mysql.sql, then data_mysql.sql to reset all auto increment sequences
 
 	ids = []int{7, 8}
-	result, err = prototypes.DeleteResources(context.Background(), db, ids)
+	result, err = prototypes.DeleteResources(context.Background(), db, ids, userId)
 	if err != nil {
 		panic(err)
 	}

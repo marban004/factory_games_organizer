@@ -44,16 +44,26 @@ type RecipeInputOutputInfo struct {
 	Amount      uint
 }
 
-type JSONInput struct {
-	MachinesList       []MachineInfo
-	ResourcesList      []ResourceInfo
-	RecipesList        []RecipeInfo
-	RecipesInputsList  []RecipeInputOutputInfo
-	RecipesOutputsList []RecipeInputOutputInfo
+type MachinesRecipesInfo struct {
+	Id         uint
+	UsersId    uint
+	RecipesId  uint
+	MachinesId uint
 }
 
-func SelectMachines(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]MachineInfo, error) {
-	query := "SELECT * FROM machines WHERE id >= " + strconv.Itoa(startId)
+type JSONInput struct {
+	MachinesList        []MachineInfo
+	ResourcesList       []ResourceInfo
+	RecipesList         []RecipeInfo
+	RecipesInputsList   []RecipeInputOutputInfo
+	RecipesOutputsList  []RecipeInputOutputInfo
+	MachinesRecipesList []MachinesRecipesInfo
+}
+
+// pass userid in jwt and substitute in all data from body after receiving it to prevent malicious changing/deleting of other user's data
+// implement select by id for all tables
+func SelectMachines(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]MachineInfo, error) {
+	query := "SELECT * FROM machines WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + strconv.Itoa(rowsRet)
 	}
@@ -102,7 +112,7 @@ func InsertMachines(ctx context.Context, db *sql.DB, data []MachineInfo) (sql.Re
 	return result, nil
 }
 
-func DeleteMachines(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+func DeleteMachines(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
 	query := "DELETE FROM machines WHERE id in ("
 	for i, id := range ids {
 		if i != 0 {
@@ -110,7 +120,7 @@ func DeleteMachines(ctx context.Context, db *sql.DB, ids []int) (sql.Result, err
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ");"
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -121,8 +131,8 @@ func DeleteMachines(ctx context.Context, db *sql.DB, ids []int) (sql.Result, err
 func UpdateMachines(ctx context.Context, db *sql.DB, data []MachineInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		query := fmt.Sprintf("UPDATE machines SET name='%s', inputs_solid=%d, inputs_liquid=%d, outputs_solid=%d, outputs_liquid=%d, speed=%f, power_consumption_kw=%d, default_choice=%d WHERE id=%d;",
-			entry.Name, entry.InputsSolid, entry.InputsLiquid, entry.OutputsSolid, entry.OutputsLiquid, entry.Speed, entry.PowerConsumptionKw, entry.DefaultChoice, entry.Id)
+		query := fmt.Sprintf("UPDATE machines SET name='%s', inputs_solid=%d, inputs_liquid=%d, outputs_solid=%d, outputs_liquid=%d, speed=%f, power_consumption_kw=%d, default_choice=%d WHERE id=%d and users_id=%d;",
+			entry.Name, entry.InputsSolid, entry.InputsLiquid, entry.OutputsSolid, entry.OutputsLiquid, entry.Speed, entry.PowerConsumptionKw, entry.DefaultChoice, entry.Id, entry.UsersId)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
@@ -132,8 +142,8 @@ func UpdateMachines(ctx context.Context, db *sql.DB, data []MachineInfo) ([]sql.
 	return results, nil
 }
 
-func SelectResources(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]ResourceInfo, error) {
-	query := "SELECT * FROM resources WHERE id >= " + strconv.Itoa(startId)
+func SelectResources(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]ResourceInfo, error) {
+	query := "SELECT * FROM resources WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + strconv.Itoa(rowsRet)
 	}
@@ -177,7 +187,7 @@ func InsertResources(ctx context.Context, db *sql.DB, data []ResourceInfo) (sql.
 	return result, nil
 }
 
-func DeleteResources(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+func DeleteResources(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
 	query := "DELETE FROM resources WHERE id in ("
 	for i, id := range ids {
 		if i != 0 {
@@ -185,7 +195,7 @@ func DeleteResources(ctx context.Context, db *sql.DB, ids []int) (sql.Result, er
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ");"
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -196,8 +206,8 @@ func DeleteResources(ctx context.Context, db *sql.DB, ids []int) (sql.Result, er
 func UpdateResources(ctx context.Context, db *sql.DB, data []ResourceInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		query := fmt.Sprintf("UPDATE resources SET name='%s', liquid=%d, resource_unit='%s' WHERE id=%d;",
-			entry.Name, entry.Liquid, entry.ResourceUnit, entry.Id)
+		query := fmt.Sprintf("UPDATE resources SET name='%s', liquid=%d, resource_unit='%s' WHERE id=%d and users_id=%d;",
+			entry.Name, entry.Liquid, entry.ResourceUnit, entry.Id, entry.UsersId)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
@@ -207,8 +217,8 @@ func UpdateResources(ctx context.Context, db *sql.DB, data []ResourceInfo) ([]sq
 	return results, nil
 }
 
-func SelectRecipes(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]RecipeInfo, error) {
-	query := "SELECT * FROM Recipes WHERE id >= " + strconv.Itoa(startId)
+func SelectRecipes(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInfo, error) {
+	query := "SELECT * FROM Recipes WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + strconv.Itoa(rowsRet)
 	}
@@ -252,7 +262,7 @@ func InsertRecipes(ctx context.Context, db *sql.DB, data []RecipeInfo) (sql.Resu
 	return result, nil
 }
 
-func DeleteRecipes(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+func DeleteRecipes(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
 	query := "DELETE FROM recipes WHERE id in ("
 	for i, id := range ids {
 		if i != 0 {
@@ -260,7 +270,7 @@ func DeleteRecipes(ctx context.Context, db *sql.DB, ids []int) (sql.Result, erro
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ");"
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -271,8 +281,8 @@ func DeleteRecipes(ctx context.Context, db *sql.DB, ids []int) (sql.Result, erro
 func UpdateRecipes(ctx context.Context, db *sql.DB, data []RecipeInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		query := fmt.Sprintf("UPDATE recipes SET name='%s', production_time_s=%d, default_choice='%d' WHERE id=%d;",
-			entry.Name, entry.ProductionTimeS, entry.DefaultChoice, entry.Id)
+		query := fmt.Sprintf("UPDATE recipes SET name='%s', production_time_s=%d, default_choice='%d' WHERE id=%d and users_id=%d;",
+			entry.Name, entry.ProductionTimeS, entry.DefaultChoice, entry.Id, entry.UsersId)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
@@ -282,8 +292,8 @@ func UpdateRecipes(ctx context.Context, db *sql.DB, data []RecipeInfo) ([]sql.Re
 	return results, nil
 }
 
-func SelectRecipesInputs(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]RecipeInputOutputInfo, error) {
-	query := "SELECT * FROM Recipes_inputs WHERE id >= " + strconv.Itoa(startId)
+func SelectRecipesInputs(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM Recipes_inputs WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + strconv.Itoa(rowsRet)
 	}
@@ -327,7 +337,7 @@ func InsertRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutp
 	return result, nil
 }
 
-func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
 	query := "DELETE FROM recipes_inputs WHERE id in ("
 	for i, id := range ids {
 		if i != 0 {
@@ -335,7 +345,7 @@ func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ");"
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -346,8 +356,8 @@ func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result
 func UpdateRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		query := fmt.Sprintf("UPDATE recipes_inputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d;",
-			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id)
+		query := fmt.Sprintf("UPDATE recipes_inputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d and users_id=%d;",
+			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id, entry.UsersId)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
@@ -357,8 +367,8 @@ func UpdateRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutp
 	return results, nil
 }
 
-func SelectRecipesOutputs(ctx context.Context, db *sql.DB, startId int, rowsRet int) ([]RecipeInputOutputInfo, error) {
-	query := "SELECT * FROM Recipes_outputs WHERE id >= " + strconv.Itoa(startId)
+func SelectRecipesOutputs(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM Recipes_outputs WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + strconv.Itoa(rowsRet)
 	}
@@ -389,10 +399,10 @@ func InsertRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOut
 		if i != 0 {
 			query += ","
 		}
-		query += ` ("` + fmt.Sprint(entry.UsersId) +
-			`", ` + fmt.Sprint(entry.RecipesId) +
+		query += ` (` + fmt.Sprint(entry.UsersId) +
+			`, ` + fmt.Sprint(entry.RecipesId) +
 			`, ` + fmt.Sprint(entry.ResourcesId) +
-			`, "` + fmt.Sprint(entry.Amount) + `")`
+			`, ` + fmt.Sprint(entry.Amount) + `)`
 	}
 	query += ";"
 	result, err := db.ExecContext(ctx, query)
@@ -402,7 +412,7 @@ func InsertRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOut
 	return result, nil
 }
 
-func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int) (sql.Result, error) {
+func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
 	query := "DELETE FROM recipes_outputs WHERE id in ("
 	for i, id := range ids {
 		if i != 0 {
@@ -410,7 +420,7 @@ func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int) (sql.Resul
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ");"
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -421,8 +431,8 @@ func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int) (sql.Resul
 func UpdateRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOutputInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		query := fmt.Sprintf("UPDATE recipes_outputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d;",
-			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id)
+		query := fmt.Sprintf("UPDATE recipes_outputs SET recipes_id='%d', resources_id=%d, amount='%d' WHERE id=%d and users_id=%d;",
+			entry.RecipesId, entry.ResourcesId, entry.Amount, entry.Id, entry.UsersId)
 		result, err := db.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
@@ -430,4 +440,119 @@ func UpdateRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOut
 		}
 	}
 	return results, nil
+}
+
+func SelectMachinesRecipes(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]MachinesRecipesInfo, error) {
+	query := "SELECT * FROM machines_recipes WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	if rowsRet > 0 {
+		query += " LIMIT " + strconv.Itoa(rowsRet)
+	}
+	query += ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []MachinesRecipesInfo
+	for result.Next() {
+		var row MachinesRecipesInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.MachinesId)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
+func InsertMachinesRecipes(ctx context.Context, db *sql.DB, data []MachinesRecipesInfo) (sql.Result, error) {
+	query := "INSERT INTO machines_recipes(users_id, recipes_id, machines_id) VALUES"
+	i := 0
+	for _, entry := range data {
+		err := VerifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		if err.Error() == sql.ErrNoRows.Error() {
+			continue
+		}
+		if i != 0 {
+			query += ","
+		}
+		i++
+		query += ` (` + fmt.Sprint(entry.UsersId) +
+			`, ` + fmt.Sprint(entry.RecipesId) +
+			`, ` + fmt.Sprint(entry.MachinesId) + `)`
+	}
+	query += ";"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been fully inserted: %w", err)
+	}
+	return result, nil
+}
+
+func DeleteMachinesRecipes(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.Result, error) {
+	query := "DELETE FROM machines_recipes WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been deleted: %w", err)
+	}
+	return result, nil
+}
+
+func UpdateMachinesRecipes(ctx context.Context, db *sql.DB, data []MachinesRecipesInfo) ([]sql.Result, error) {
+	results := []sql.Result{}
+	for _, entry := range data {
+		err := VerifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		if err.Error() == sql.ErrNoRows.Error() {
+			continue
+		}
+		query := fmt.Sprintf("UPDATE machines_recipes SET recipes_id='%d', machines_id=%d WHERE id=%d and users_id=%d;",
+			entry.RecipesId, entry.MachinesId, entry.Id, entry.UsersId)
+		result, err := db.ExecContext(ctx, query)
+		results = append(results, result)
+		if err != nil {
+			return results, fmt.Errorf("data has not been fully updated: %w", err)
+		}
+	}
+	return results, nil
+}
+
+func VerifyRecipeMachineIntegrity(ctx context.Context, db *sql.DB, recipeId uint, machineId uint, userId uint) error {
+	query := fmt.Sprintf(`select * from machines where inputs_liquid >= 
+	(select count(*) from recipes r 
+	left join recipes_inputs ri on r.id = ri.recipes_id 
+	left join resources rs on ri.resources_id = rs.id 
+	where r.id = %[1]d and users_id = %[3]d and rs.liquid = 1) 
+and outputs_liquid >= 
+	(select count(*) from recipes r 
+	left join recipes_outputs ro on r.id = ro.recipes_id 
+	left join resources rs on ro.resources_id = rs.id 
+	where r.id = %[1]d and users_id = %[3]d and rs.liquid = 1)
+and inputs_solid >= (select case when count(*) > 0 then 1 else 0 end from recipes r 
+	left join recipes_inputs ri on r.id = ri.recipes_id 
+	left join resources rs on ri.resources_id = rs.id 
+	where r.id = %[1]d and users_id = %[3]d and rs.liquid = 0)
+and outputs_solid >= 
+	(select case when count(*) > 0 then 1 else 0 end from recipes r 
+	left join recipes_outputs ro on r.id = ro.recipes_id 
+	left join resources rs on ro.resources_id = rs.id 
+	where r.id = %[1]d and users_id = %[3]d and rs.liquid = 0)
+and id = %[2]d and users_id = %[3]d;`, recipeId, machineId, userId)
+	_, err := db.QueryContext(ctx, query)
+	if err.Error() == sql.ErrNoRows.Error() {
+		return err
+	}
+	if err != nil {
+		return fmt.Errorf("data integrity has not been sucessfully verified: %w", err)
+	}
+	return nil
 }

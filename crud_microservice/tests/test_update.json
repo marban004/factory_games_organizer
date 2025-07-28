@@ -88,5 +88,19 @@
             "resourcesId":2,
             "amount":150
         }
+    ],
+    "machinesRecipesList":[
+        {
+            "id":5,
+            "usersId":1,
+            "recipesId":1,
+            "machinesId":2
+        },
+        {
+            "id":6,
+            "usersId":1,
+            "recipesId":3,
+            "machinesId":4
+        }
     ]
 }
