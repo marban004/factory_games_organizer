@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 )
 
 type MachineInfo struct {
@@ -62,10 +61,39 @@ type JSONInput struct {
 
 // pass userid in jwt and substitute in all data from body after receiving it to prevent malicious changing/deleting of other user's data
 // implement select by id for all tables
+func SelectMachinesById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]MachineInfo, error) {
+	query := "SELECT * FROM machines WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []MachineInfo
+	for result.Next() {
+		var row MachineInfo
+		err = result.Scan(&row.Id, &row.Name, &row.UsersId, &row.InputsSolid, &row.InputsLiquid, &row.OutputsSolid, &row.OutputsLiquid, &row.Speed, &row.PowerConsumptionKw, &row.DefaultChoice)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectMachines(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]MachineInfo, error) {
-	query := "SELECT * FROM machines WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM machines WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -120,7 +148,7 @@ func DeleteMachines(ctx context.Context, db *sql.DB, ids []int, userId int) (sql
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -142,10 +170,39 @@ func UpdateMachines(ctx context.Context, db *sql.DB, data []MachineInfo) ([]sql.
 	return results, nil
 }
 
+func SelectResourcesById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]ResourceInfo, error) {
+	query := "SELECT * FROM resources WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []ResourceInfo
+	for result.Next() {
+		var row ResourceInfo
+		err = result.Scan(&row.Id, &row.Name, &row.UsersId, &row.Liquid, &row.ResourceUnit)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectResources(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]ResourceInfo, error) {
-	query := "SELECT * FROM resources WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM resources WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -195,7 +252,7 @@ func DeleteResources(ctx context.Context, db *sql.DB, ids []int, userId int) (sq
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -217,10 +274,39 @@ func UpdateResources(ctx context.Context, db *sql.DB, data []ResourceInfo) ([]sq
 	return results, nil
 }
 
+func SelectRecipesById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]RecipeInfo, error) {
+	query := "SELECT * FROM recipes WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []RecipeInfo
+	for result.Next() {
+		var row RecipeInfo
+		err = result.Scan(&row.Id, &row.Name, &row.UsersId, &row.ProductionTimeS, &row.DefaultChoice)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectRecipes(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInfo, error) {
-	query := "SELECT * FROM Recipes WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM Recipes WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -270,7 +356,7 @@ func DeleteRecipes(ctx context.Context, db *sql.DB, ids []int, userId int) (sql.
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -292,10 +378,39 @@ func UpdateRecipes(ctx context.Context, db *sql.DB, data []RecipeInfo) ([]sql.Re
 	return results, nil
 }
 
+func SelectRecipesInputsById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM recipes_inputs WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []RecipeInputOutputInfo
+	for result.Next() {
+		var row RecipeInputOutputInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.ResourcesId, &row.Amount)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectRecipesInputs(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInputOutputInfo, error) {
-	query := "SELECT * FROM Recipes_inputs WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM Recipes_inputs WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -345,7 +460,7 @@ func DeleteRecipesInputs(ctx context.Context, db *sql.DB, ids []int, userId int)
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -367,10 +482,39 @@ func UpdateRecipesInputs(ctx context.Context, db *sql.DB, data []RecipeInputOutp
 	return results, nil
 }
 
+func SelectRecipesOutputsById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]RecipeInputOutputInfo, error) {
+	query := "SELECT * FROM recipes_outputs WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []RecipeInputOutputInfo
+	for result.Next() {
+		var row RecipeInputOutputInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.ResourcesId, &row.Amount)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectRecipesOutputs(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]RecipeInputOutputInfo, error) {
-	query := "SELECT * FROM Recipes_outputs WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM Recipes_outputs WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -420,7 +564,7 @@ func DeleteRecipesOutputs(ctx context.Context, db *sql.DB, ids []int, userId int
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -442,10 +586,39 @@ func UpdateRecipesOutputs(ctx context.Context, db *sql.DB, data []RecipeInputOut
 	return results, nil
 }
 
+func SelectMachinesRecipesById(ctx context.Context, db *sql.DB, ids []int, userId int) ([]MachinesRecipesInfo, error) {
+	query := "SELECT * FROM machines_recipes WHERE id in ("
+	for i, id := range ids {
+		if i != 0 {
+			query += ","
+		}
+		query += " " + fmt.Sprint(id)
+	}
+	query += ") AND users_id = " + fmt.Sprint(userId) + ";"
+	result, err := db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve data from db: %w", err)
+	}
+	var resultRows []MachinesRecipesInfo
+	for result.Next() {
+		var row MachinesRecipesInfo
+		err = result.Scan(&row.Id, &row.UsersId, &row.RecipesId, &row.MachinesId)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse data retrieved from db: %w", err)
+		}
+		resultRows = append(resultRows, row)
+	}
+	err = result.Err()
+	if err != nil {
+		return nil, fmt.Errorf("encountered an unexpected error: %w", err)
+	}
+	return resultRows, nil
+}
+
 func SelectMachinesRecipes(ctx context.Context, db *sql.DB, startId int, rowsRet int, userId int) ([]MachinesRecipesInfo, error) {
-	query := "SELECT * FROM machines_recipes WHERE id >= " + strconv.Itoa(startId) + " AND users_id = " + strconv.Itoa(userId)
+	query := "SELECT * FROM machines_recipes WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
-		query += " LIMIT " + strconv.Itoa(rowsRet)
+		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
 	query += ";"
 	result, err := db.QueryContext(ctx, query)
@@ -472,7 +645,7 @@ func InsertMachinesRecipes(ctx context.Context, db *sql.DB, data []MachinesRecip
 	query := "INSERT INTO machines_recipes(users_id, recipes_id, machines_id) VALUES"
 	i := 0
 	for _, entry := range data {
-		err := VerifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		err := verifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
 		if err.Error() == sql.ErrNoRows.Error() {
 			continue
 		}
@@ -500,7 +673,7 @@ func DeleteMachinesRecipes(ctx context.Context, db *sql.DB, ids []int, userId in
 		}
 		query += " " + fmt.Sprint(id)
 	}
-	query += ") and users_id = " + strconv.Itoa(userId) + ";"
+	query += ") and users_id = " + fmt.Sprint(userId) + ";"
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("data has not been deleted: %w", err)
@@ -511,7 +684,7 @@ func DeleteMachinesRecipes(ctx context.Context, db *sql.DB, ids []int, userId in
 func UpdateMachinesRecipes(ctx context.Context, db *sql.DB, data []MachinesRecipesInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	for _, entry := range data {
-		err := VerifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		err := verifyRecipeMachineIntegrity(ctx, db, entry.RecipesId, entry.MachinesId, entry.UsersId)
 		if err.Error() == sql.ErrNoRows.Error() {
 			continue
 		}
@@ -526,7 +699,7 @@ func UpdateMachinesRecipes(ctx context.Context, db *sql.DB, data []MachinesRecip
 	return results, nil
 }
 
-func VerifyRecipeMachineIntegrity(ctx context.Context, db *sql.DB, recipeId uint, machineId uint, userId uint) error {
+func verifyRecipeMachineIntegrity(ctx context.Context, db *sql.DB, recipeId uint, machineId uint, userId uint) error {
 	query := fmt.Sprintf(`select * from machines where inputs_liquid >= 
 	(select count(*) from recipes r 
 	left join recipes_inputs ri on r.id = ri.recipes_id 

@@ -15,6 +15,9 @@ func (a *AppCalculator) loadRoutes() {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	router.Route("/calculate", a.loadCalculateRoutes)
 

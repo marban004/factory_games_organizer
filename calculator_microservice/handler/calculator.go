@@ -18,8 +18,8 @@ func (c *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 	//userid = user with whose data we want to generate production tree, not optional
 	//resource = resource for which we want to generate production tree, not optional
 	//rate = target production rate per second for specified resource, not optional
-	//alt_recipes = recipes that can be used besides default recipes, optional
-	//alt_machines = machines that can be used besides default machines, optional
+	//alt_recipe = recipe that can be used besides default recipes, optional, can be present multiple times, in such case each value will be included in calculation
+	//alt_machine = machine that can be used besides default machines, optional, can be present multiple times, in such case each value will be included in calculation
 	userId, err := strconv.Atoi(r.URL.Query().Get("userid"))
 	if err != nil || userId <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -38,8 +38,8 @@ func (c *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("userid should be a positive floating point number and cannot be empty"))
 		return
 	}
-	recipes_names := []string{r.URL.Query().Get("alt_recipes")}
-	machine_names := []string{r.URL.Query().Get("alt_machines")}
+	recipes_names := r.URL.Query()["alt_recipe"]
+	machine_names := r.URL.Query()["alt_machine"]
 	byteJSONRepresentation, err := microservicelogiccalculator.Calculate(r.Context(), userId, desiredResourceName, float32(desiredRate), recipes_names, machine_names, c.DB)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
