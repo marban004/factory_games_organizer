@@ -1,0 +1,8 @@
+{
+    "machinesIds":[1,2],
+    "resourcesIds":[1,2],
+    "recipesIds":[1,2],
+    "recipesInputsIds":[1,2],
+    "recipesOutputsIds":[1,2],
+    "machinesRecipesIds":[1,2]
+}

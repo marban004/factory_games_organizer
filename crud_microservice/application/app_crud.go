@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -82,9 +83,9 @@ func (a *AppCrud) loadDB() {
 
 // implement reading file designated by the path in a.config.ServerCertPath
 func (a *AppCrud) loadSecret() {
-	if len(a.config.ServerCertPath) > 0 {
-		a.secret = "yes"
-	} else {
+	fileContents, err := os.ReadFile(a.config.ServerCertPath)
+	if err != nil {
 		panic("could not open server certificate file")
 	}
+	a.secret = string(fileContents)
 }
