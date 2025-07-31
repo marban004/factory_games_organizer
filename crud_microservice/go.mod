@@ -14,5 +14,6 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.2.2
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/stretchr/testify v1.10.0
 )

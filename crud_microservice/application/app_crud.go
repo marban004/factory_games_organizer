@@ -14,7 +14,7 @@ import (
 type AppCrud struct {
 	router http.Handler
 	db     *sql.DB
-	secret string
+	secret []byte
 	config Config
 }
 
@@ -22,9 +22,9 @@ func New(config Config) *AppCrud {
 	app := &AppCrud{
 		config: config,
 	}
+	app.loadSecret()
 	app.loadDB()
 	app.loadRoutes()
-	app.loadSecret()
 	return app
 }
 
@@ -87,5 +87,5 @@ func (a *AppCrud) loadSecret() {
 	if err != nil {
 		panic("could not open server certificate file")
 	}
-	a.secret = string(fileContents)
+	a.secret = fileContents
 }

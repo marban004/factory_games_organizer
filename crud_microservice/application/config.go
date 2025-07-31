@@ -16,7 +16,7 @@ func LoadConfig() Config {
 	cfg := Config{
 		DbAddress:      "127.0.0.1:3306",
 		ServerPort:     3000,
-		ServerCertPath: "crud_server_cert.p12",
+		ServerCertPath: "crud_microservice_secret.pem",
 	}
 	if dbAddr, exists := os.LookupEnv("MYSQL_ADDR"); exists {
 		cfg.DbAddress = dbAddr
@@ -30,7 +30,7 @@ func LoadConfig() Config {
 	}
 	if serverCertPath, exists := os.LookupEnv("CERT"); exists {
 		cfg.ServerCertPath = serverCertPath
-		fmt.Println("Found server certificate file path")
+		fmt.Println("Found server certificate file path", serverCertPath)
 	}
 	return cfg
 }

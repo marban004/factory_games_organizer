@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/marban004/factory_games_organizer/microservice_logic_crud/model"
 	"github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/machine"
 	machinerecipe "github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/machine_recipe"
@@ -32,7 +34,7 @@ type CRUD struct {
 	RecipeinputRepo   *recipeinput.MySQLRepo
 	RecipeoutputRepo  *recipeoutput.MySQLRepo
 	MachineRecipeRepo *machinerecipe.MySQLRepo
-	Secret            string
+	Secret            []byte
 }
 
 func (h *CRUD) SelectByID(w http.ResponseWriter, r *http.Request) {
@@ -767,11 +769,27 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // todo: implement verification of jwt
-func (h *CRUD) verifyJWT(jwt string) (bool, int) {
-	if len(jwt) > 0 {
-		return true, 1
+func (h *CRUD) verifyJWT(jwtString string) (bool, int) {
+	token, err := jwt.Parse(jwtString, func(*jwt.Token) (interface{}, error) {
+		return h.Secret, nil
+	}, jwt.WithValidMethods([]string{"HS256"}))
+	if err != nil {
+		return false, 0
 	}
-	return false, 0
+	if !token.Valid {
+		return false, 0
+	}
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["userId"].(float64)
+	expTime := int64(claims["exp"].(float64))
+	issueTime := int64(claims["iat"].(float64))
+	if time.Now().Unix() > expTime {
+		return false, 0
+	}
+	if time.Now().Unix() <= issueTime {
+		return false, 0
+	}
+	return true, int(userId)
 }
 
 func (h *CRUD) convertArrToInt(input []string) []int {
