@@ -145,6 +145,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteMachines() {
 	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
 }
 
+func (cits *CrudIntegrationTestSuite) TestDeleteMachinesByUserId() {
+	repo := machine.MySQLRepo{DB: cits.db}
+	expectedRows := []model.MachineInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteMachinesByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(4), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectMachines(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
 func (cits *CrudIntegrationTestSuite) TestSelectResourcesById() {
 	repo := resource.MySQLRepo{DB: cits.db}
 	expectedRows := []model.ResourceInfo{
@@ -233,6 +252,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteResources() {
 	rowsChanged, err := result.RowsAffected()
 	cits.Nil(err)
 	cits.Equal(int64(3), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectResources(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (cits *CrudIntegrationTestSuite) TestDeleteResourcesByUserId() {
+	repo := resource.MySQLRepo{DB: cits.db}
+	expectedRows := []model.ResourceInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteResourcesByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(6), rowsChanged, "The number of changed rows differs from expected")
 
 	returnedRows, err := repo.SelectResources(context.Background(), 0, 0, 1)
 	cits.Nil(err)
@@ -335,6 +373,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteRecipes() {
 	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
 }
 
+func (cits *CrudIntegrationTestSuite) TestDeleteRecipesByUserId() {
+	repo := recipe.MySQLRepo{DB: cits.db}
+	expectedRows := []model.RecipeInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteRecipesByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(6), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectRecipes(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
 func (cits *CrudIntegrationTestSuite) TestSelectRecipesInputsById() {
 	repo := recipeinput.MySQLRepo{DB: cits.db}
 	expectedRows := []model.RecipeInputOutputInfo{
@@ -424,6 +481,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteRecipesInputs() {
 	rowsChanged, err := result.RowsAffected()
 	cits.Nil(err)
 	cits.Equal(int64(2), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectRecipesInputs(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (cits *CrudIntegrationTestSuite) TestDeleteRecipesInputsByUserId() {
+	repo := recipeinput.MySQLRepo{DB: cits.db}
+	expectedRows := []model.RecipeInputOutputInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteRecipesInputsByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(6), rowsChanged, "The number of changed rows differs from expected")
 
 	returnedRows, err := repo.SelectRecipesInputs(context.Background(), 0, 0, 1)
 	cits.Nil(err)
@@ -525,6 +601,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteRecipesOutputs() {
 	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
 }
 
+func (cits *CrudIntegrationTestSuite) TestDeleteRecipesOutputsByUserId() {
+	repo := recipeoutput.MySQLRepo{DB: cits.db}
+	expectedRows := []model.RecipeInputOutputInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteRecipesOutputsByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(6), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectRecipesOutputs(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
 func (cits *CrudIntegrationTestSuite) TestSelectMachinesRecipesById() {
 	repo := machinerecipe.MySQLRepo{DB: cits.db}
 	expectedRows := []model.MachinesRecipesInfo{
@@ -616,6 +711,25 @@ func (cits *CrudIntegrationTestSuite) TestDeleteMachinesRecipes() {
 	rowsChanged, err := result.RowsAffected()
 	cits.Nil(err)
 	cits.Equal(int64(1), rowsChanged, "The number of changed rows differs from expected")
+
+	returnedRows, err := repo.SelectMachinesRecipes(context.Background(), 0, 0, 1)
+	cits.Nil(err)
+	cits.ElementsMatch(returnedRows, expectedRows, "The returned and expected values don't match")
+}
+
+func (cits *CrudIntegrationTestSuite) TestDeleteMachinesRecipesByUserId() {
+	repo := machinerecipe.MySQLRepo{DB: cits.db}
+	expectedRows := []model.MachinesRecipesInfo{}
+	transaction, err := repo.DB.BeginTx(context.Background(), nil)
+	cits.Nil(err)
+	result, err := repo.DeleteMachinesRecipesByUserId(context.Background(), transaction, 1)
+	cits.Nil(err)
+	err = transaction.Commit()
+	cits.Nil(err)
+
+	rowsChanged, err := result.RowsAffected()
+	cits.Nil(err)
+	cits.Equal(int64(6), rowsChanged, "The number of changed rows differs from expected")
 
 	returnedRows, err := repo.SelectMachinesRecipes(context.Background(), 0, 0, 1)
 	cits.Nil(err)

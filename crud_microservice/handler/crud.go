@@ -502,6 +502,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested machines data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -522,6 +523,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested resources data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -542,6 +544,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -562,6 +565,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes_inputs data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -582,6 +586,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes_outputs data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -602,6 +607,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested machines_recipes data, reason: %w", err).Error()))
+			return
 		}
 		if !skipRows {
 			for _, row := range result {
@@ -756,6 +762,151 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 				skipRows = true
 			}
 			response.MachinesRecipesDeleted = uint(noRows)
+		}
+	}
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("data has been deleted, but could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+func (h *CRUD) DeleteByUser(w http.ResponseWriter, r *http.Request) {
+	//parameters for request are:
+	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
+	jwt := r.URL.Query().Get("jwt")
+	if len(jwt) <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("jwt parameter cannot be empty"))
+		return
+	}
+	valid, userId := h.verifyJWT(jwt)
+	if !valid {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("provided jwt is invalid"))
+		return
+	}
+	var response struct {
+		MachinesDeleted        uint
+		ResourcesDeleted       uint
+		RecipesDeleted         uint
+		RecipesInputsDeleted   uint
+		RecipesOutputsDeleted  uint
+		MachinesRecipesDeleted uint
+	}
+	response.MachinesDeleted = 0
+	response.ResourcesDeleted = 0
+	response.RecipesDeleted = 0
+	response.RecipesInputsDeleted = 0
+	response.RecipesOutputsDeleted = 0
+	response.MachinesRecipesDeleted = 0
+	ctx := r.Context()
+	transaction, err := h.MachineRepo.DB.BeginTx(ctx, nil)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not start a transaction, reason: %w", err).Error()))
+		return
+	}
+	skipRows := false
+
+	result, err := h.MachineRepo.DeleteMachinesByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested machines data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.MachinesDeleted = uint(noRows)
+	}
+	result, err = h.ResourceRepo.DeleteResourcesByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested resources data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.ResourcesDeleted = uint(noRows)
+	}
+	result, err = h.RecipeRepo.DeleteRecipesByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested recipes data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.RecipesDeleted = uint(noRows)
+	}
+	result, err = h.RecipeinputRepo.DeleteRecipesInputsByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested recipes_inputs data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.RecipesInputsDeleted = uint(noRows)
+	}
+	result, err = h.RecipeoutputRepo.DeleteRecipesOutputsByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested recipes_outputs data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.RecipesOutputsDeleted = uint(noRows)
+	}
+	result, err = h.MachineRecipeRepo.DeleteMachinesRecipesByUserId(ctx, transaction, userId)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested machines_inputs data, reason: %w", err).Error()))
+		return
+	}
+	if !skipRows {
+		noRows, err := result.RowsAffected()
+		if err != nil {
+			w.Write([]byte("database driver does not support returning numbers of rows affected"))
+			skipRows = true
+		}
+		response.MachinesRecipesDeleted = uint(noRows)
+	}
+	err = transaction.Commit()
+	if err != nil {
+		rollbackErr := transaction.Rollback()
+		if rollbackErr != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Errorf("an error occurred, could not rollback transaction, reason: %w", rollbackErr).Error()))
+			return
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(fmt.Errorf("an error occurred, transaction has been rolled back, reason: %w", err).Error()))
+			return
 		}
 	}
 	byteJSONRepresentation, err := json.Marshal(response)

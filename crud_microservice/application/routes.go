@@ -39,6 +39,7 @@ func (a *AppCrud) loadRoutes() {
 	router.Post("/", crudHandler.Insert)
 	router.Put("/", crudHandler.Update)
 	router.Delete("/", crudHandler.Delete)
+	router.Delete("/user", crudHandler.DeleteByUser)
 
 	a.router = router
 }

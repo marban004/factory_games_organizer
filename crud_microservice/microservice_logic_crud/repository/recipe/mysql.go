@@ -102,6 +102,19 @@ func (r *MySQLRepo) DeleteRecipes(ctx context.Context, ids []int, userId int) (s
 	return result, nil
 }
 
+func (r *MySQLRepo) DeleteRecipesByUserId(ctx context.Context, transaction *sql.Tx, userId int) (sql.Result, error) {
+	query := "DELETE FROM recipes WHERE users_id = " + fmt.Sprint(userId) + ";"
+	result, err := transaction.ExecContext(ctx, query)
+	if err != nil {
+		rollbackErr := transaction.Rollback()
+		if rollbackErr != nil {
+			return nil, fmt.Errorf("could not rollback changes: %w", rollbackErr)
+		}
+		return nil, fmt.Errorf("an error occurred, transaction has been rolled back: %w", err)
+	}
+	return result, nil
+}
+
 func (r *MySQLRepo) UpdateRecipes(ctx context.Context, data []model.RecipeInfo) ([]sql.Result, error) {
 	results := []sql.Result{}
 	transaction, err := r.DB.BeginTx(ctx, nil)
