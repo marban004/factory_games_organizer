@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,7 +32,7 @@ func CheckPassword(passwd, hash string) bool {
 	return err == nil
 }
 
-func CreateToken(userId int) (string, error) {
+func CreateJWT(userId int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"userId": userId,
@@ -50,91 +51,148 @@ func CreateToken(userId int) (string, error) {
 	return tokenString, nil
 }
 
-// logins must be unique
+// logins must be unique, put in User repository, 0 means user not verified as user id in database starts from 1
 func VerifyUser(ctx context.Context, db *sql.DB, login string, passwd string) (uint, error) {
 	user := User{}
-	query := fmt.Sprintf(`SELECT * FROM users where login = "%s"`, login)
-	err := db.QueryRowContext(ctx, query).Scan(&user)
-	if err != nil {
+	query := fmt.Sprintf(`SELECT * FROM users where login = "%s"`, strings.ToLower(login))
+	err := db.QueryRowContext(ctx, query).Scan(&user.UserId, &user.UserLogin, &user.UserPasswdHash)
+	if err != sql.ErrNoRows && err != nil {
 		return 0, fmt.Errorf("could not verify user: %w", err)
+	}
+	if err == sql.ErrNoRows {
+		return 0, nil
 	}
 	if CheckPassword(passwd, user.UserPasswdHash) {
 		return user.UserId, nil
 	}
-	return 0, fmt.Errorf("invalid credentials")
+	return 0, nil
 }
 
-func CreateUser(ctx context.Context, db *sql.DB, login string, passwd string) (uint, error) {
-	user := User{}
-	query := fmt.Sprintf(`SELECT * FROM users where login = "%s"`, login)
-	err := db.QueryRowContext(ctx, query).Scan(&user)
-	if err == sql.ErrNoRows {
-		return 0, fmt.Errorf("this login is already in use, provide a different login")
-	}
+// put in User repository, only creates does not verify validity of login and password
+func CreateUser(ctx context.Context, db *sql.DB, user User) (sql.Result, error) {
+	query := fmt.Sprintf(`INSERT INTO users VALUES (null, "%s", "%s")`, strings.ToLower(user.UserLogin), user.UserPasswdHash)
+	result, err := db.ExecContext(ctx, query)
 	if err != nil {
-		return 0, fmt.Errorf("could not connect to database: %w", err)
+		return nil, fmt.Errorf("could not insert new user: %w", err)
 	}
-	matched, err := regexp.Match(`^.{8,72}$"`, []byte(passwd))
+	return result, nil
+}
+
+// put in User repository, does not verify validity of login and password, replace UserId in user with id from jwt
+func UpdateUser(ctx context.Context, db *sql.DB, user User) (sql.Result, error) {
+	query := `UPDATE users SET `
+	if len(user.UserLogin) > 0 {
+		query += fmt.Sprintf(`login = "%s" `, strings.ToLower(user.UserLogin))
+	}
+	if len(user.UserPasswdHash) > 0 {
+		query += fmt.Sprintf(`passwdhash = "%s" `, user.UserPasswdHash)
+	}
+	query += fmt.Sprintf(`WHERE id = %d`, user.UserId)
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("user has not been updated: %w", err)
+	}
+	return result, nil
+}
+
+func DeleteUser(ctx context.Context, db *sql.DB, userId uint) (sql.Result, error) {
+	query := fmt.Sprintf("DELETE FROM users WHERE id = %d", userId)
+	result, err := db.ExecContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("data has not been deleted: %w", err)
+	}
+	return result, nil
+}
+
+func VerifyUserLogin(login string) (bool, error) {
+	valid, err := VerifyAgainstRegexMatches(login, `^.{3,64}$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexNotMatches(login, `^.*((?i)(select)|(?i)(update)|(?i)(insert)|(?i)(delete)|(?i)(drop)).*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexNotMatches(login, `^.*["';].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	return valid, err
+}
+
+func VerifyUserPassword(passwd string) (bool, error) {
+	valid, err := VerifyAgainstRegexMatches(passwd, `^.{8,72}$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexMatches(passwd, `^.*[a-z].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexMatches(passwd, `^.*[A-Z].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexMatches(passwd, `^.*[0-9].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexMatches(passwd, `^.*[!@#$&*].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexNotMatches(passwd, `^.*["';].*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	valid, err = VerifyAgainstRegexNotMatches(passwd, `^.*((?i)(select)|(?i)(update)|(?i)(insert)|(?i)(delete)|(?i)(drop)).*$`)
+	if !valid || err != nil {
+		return valid, err
+	}
+	return valid, err
+}
+
+func VerifyAgainstRegexMatches(text string, pattern string) (bool, error) {
+	matched, err := regexp.Match(pattern, []byte(text))
 	if !matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
+		return false, nil
 	}
 	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
+		return false, fmt.Errorf("could not parse provided pattern: %w", err)
 	}
-	matched, err = regexp.Match(`^.*[a-z].*$"`, []byte(passwd))
-	if !matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
-	}
-	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
-	}
-	matched, err = regexp.Match(`^.*[0-9].*$"`, []byte(passwd))
-	if !matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
-	}
-	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
-	}
-	matched, err = regexp.Match(`^.*[!@#$&*].*"`, []byte(passwd))
-	if !matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
-	}
-	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
-	}
-	matched, err = regexp.Match(`^.*[A-Z].*$"`, []byte(passwd))
-	if !matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
-	}
-	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
-	}
-	matched, err = regexp.Match(`^.*["';].*$"`, []byte(passwd))
+	return true, nil
+}
+
+func VerifyAgainstRegexNotMatches(text string, pattern string) (bool, error) {
+	matched, err := regexp.Match(pattern, []byte(text))
 	if matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
+		return false, nil
 	}
 	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
+		return false, fmt.Errorf("could not parse provided pattern: %w", err)
 	}
-	matched, err = regexp.Match(`^.*((?i)(select)|(?i)(update)|(?i)(insert)|(?i)(delete)|(?i)(from)).*$"`, []byte(passwd))
-	if matched {
-		return 0, fmt.Errorf("password is invalid, provide a different password")
-	}
+	return true, nil
+}
+
+func VerifyJWT(jwtString string) (bool, int) {
+	token, err := jwt.Parse(jwtString, func(*jwt.Token) (interface{}, error) {
+		return "replace with secret key later", nil
+	}, jwt.WithValidMethods([]string{"HS256"}))
 	if err != nil {
-		return 0, fmt.Errorf("could not process provided password: %w", err)
+		return false, 0
 	}
-	hash, err := GeneratePasswordHash(passwd)
-	if err != nil {
-		return 0, fmt.Errorf("could not generate password hash: %w", err)
+	if !token.Valid {
+		return false, 0
 	}
-	query = fmt.Sprintf(`INSERT INTO users VALUES (null, %s, %s)`, login, hash)
-	_, err = db.ExecContext(ctx, query)
-	if err != nil {
-		return 0, fmt.Errorf("could not insert new user: %w", err)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["userId"].(float64)
+	expTime := int64(claims["exp"].(float64))
+	issueTime := int64(claims["iat"].(float64))
+	if time.Now().Unix() > expTime {
+		return false, 0
 	}
-	userId, err := VerifyUser(ctx, db, login, passwd)
-	if err != nil {
-		return 0, fmt.Errorf("could not verify created user: %w", err)
+	if time.Now().Unix() <= issueTime {
+		return false, 0
 	}
-	return userId, nil
+	return true, int(userId)
 }

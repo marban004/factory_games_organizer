@@ -1,0 +1,3 @@
+DELETE FROM users;
+
+INSERT INTO users VALUES (1, "mat", "$2a$12$jaKjPG26/FXkyAEcZYNSCOHlT6D8fUFNENIKHi4.0MijfYig2tQ92");
