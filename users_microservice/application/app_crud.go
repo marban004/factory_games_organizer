@@ -69,11 +69,11 @@ func (a *AppCrud) Start(ctx context.Context) error {
 
 func (a *AppCrud) loadDB() {
 	cfg := mysql.NewConfig()
-	cfg.User = "crud_microservice"
-	cfg.Passwd = "juG56#ian>LK90"
+	cfg.User = "users_microservice"
+	cfg.Passwd = "bxu7%^yhag##KKL"
 	cfg.Net = "tcp"
 	cfg.Addr = a.config.DbAddress
-	cfg.DBName = "users_data"
+	cfg.DBName = "users"
 	db, err := sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
 		panic(err)
