@@ -24,7 +24,9 @@ func (a *AppCrud) loadRoutes() {
 		w.WriteHeader(http.StatusOK)
 	})
 
+	router.Post("/login", usersHandler.LoginUser)
 	router.Post("/", usersHandler.CreateUser)
 	router.Put("/", usersHandler.UpdateUser)
+	router.Delete("/", usersHandler.DeleteUser)
 	a.router = router
 }

@@ -54,7 +54,7 @@ func (h *CRUD) SelectByID(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -153,7 +153,7 @@ func (h *CRUD) Select(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -313,7 +313,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -468,7 +468,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -641,7 +641,7 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -785,7 +785,7 @@ func (h *CRUD) DeleteByUser(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}

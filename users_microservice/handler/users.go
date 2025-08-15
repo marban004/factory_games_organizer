@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -95,7 +97,7 @@ func (h *Users) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	valid, userId := h.verifyJWT(jwt)
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
@@ -161,6 +163,102 @@ func (h *Users) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(byteJSONRepresentation)
+}
+
+func (h *Users) LoginUser(w http.ResponseWriter, r *http.Request) {
+	// no parameters are required for this request
+	inputData := JSONData{}
+	err := json.NewDecoder(r.Body).Decode(&inputData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(fmt.Errorf("could not parse received body, reason: %w", err).Error()))
+		return
+	}
+	user, err := h.UserRepo.SelectUserByLogin(r.Context(), inputData.UserLogin)
+	if errors.Is(err, sql.ErrNoRows) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("no such user"))
+		return
+	} else if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not retrieve user data: %w", err).Error()))
+		return
+	}
+	if !h.checkPassword(inputData.UserPassword, user.UserPasswdHash) {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("invalid credentials"))
+		return
+	}
+	token, err := h.createToken(int(user.UserId))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate authentication token: %w", err).Error()))
+	}
+	var response struct {
+		Jwt string
+	}
+	response.Jwt = token
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("user has been updated, but could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+func (h *Users) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	//parameters for request are:
+	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
+	jwt := r.URL.Query().Get("jwt")
+	if len(jwt) <= 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("jwt parameter cannot be empty"))
+		return
+	}
+	valid, userId := h.verifyJWT(jwt)
+	if !valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("provided jwt is invalid"))
+		return
+	}
+	result, err := h.UserRepo.DeleteUser(r.Context(), uint(userId))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not delete requested user, reason: %w", err).Error()))
+		return
+	}
+	noRows, err := result.RowsAffected()
+	if err != nil {
+		w.Write([]byte("database driver does not support returning numbers of rows affected"))
+	}
+	var response struct {
+		UsersDeleted uint
+	}
+	response.UsersDeleted = uint(noRows)
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("user has been deleted, but could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+func (h *Users) createToken(userId int) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"userId": userId,
+			"exp":    time.Now().Add(time.Minute * 30).Unix(),
+			"iat":    time.Now().Unix(),
+		})
+	tokenString, err := token.SignedString(h.Secret)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
 
 // todo: implement verification of jwt
