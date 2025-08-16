@@ -7,14 +7,18 @@ import (
 )
 
 type Config struct {
-	DbAddress  string
-	ServerPort uint16
+	DbAddress        string
+	ServerPort       uint16
+	ServerSecretPath string
+	ServerCertPath   string
 }
 
 func LoadConfig() Config {
 	cfg := Config{
-		DbAddress:  "127.0.0.1:3306",
-		ServerPort: 3000,
+		DbAddress:        "127.0.0.1:3306",
+		ServerPort:       3000,
+		ServerSecretPath: "calculator_microservice_secret.pem",
+		ServerCertPath:   "calculator_microservice_cert.crt",
 	}
 	if dbAddr, exists := os.LookupEnv("MYSQL_ADDR"); exists {
 		cfg.DbAddress = dbAddr
@@ -25,6 +29,14 @@ func LoadConfig() Config {
 			cfg.ServerPort = uint16(port)
 			fmt.Println("Found server port:", cfg.ServerPort)
 		}
+	}
+	if serverSecretPath, exists := os.LookupEnv("SECRET"); exists {
+		cfg.ServerSecretPath = serverSecretPath
+		fmt.Println("Found secret key file path", serverSecretPath)
+	}
+	if serverCertPath, exists := os.LookupEnv("CERT"); exists {
+		cfg.ServerCertPath = serverCertPath
+		fmt.Println("Found certificate file path", serverCertPath)
 	}
 	return cfg
 }

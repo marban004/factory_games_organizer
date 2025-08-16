@@ -11,15 +11,19 @@ import (
 )
 
 type AppCalculator struct {
-	router http.Handler
-	db     *sql.DB
-	config Config
+	router     http.Handler
+	db         *sql.DB
+	config     Config
+	certPath   string
+	secretPath string
 }
 
 func New(config Config) *AppCalculator {
 	app := &AppCalculator{
 		config: config,
 	}
+	app.secretPath = config.ServerSecretPath
+	app.certPath = config.ServerCertPath
 	app.loadDB()
 	app.loadRoutes()
 	return app
@@ -46,7 +50,7 @@ func (a *AppCalculator) Start(ctx context.Context) error {
 	ch := make(chan error, 1)
 
 	go func() {
-		err = server.ListenAndServe()
+		err = server.ListenAndServeTLS(a.certPath, a.secretPath)
 		if err != nil {
 			ch <- fmt.Errorf("failed to listen to server: %w", err)
 		}

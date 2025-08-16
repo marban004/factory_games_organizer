@@ -9,7 +9,7 @@ import (
 	"github.com/marban004/factory_games_organizer/microservice_logic_users/repository/user"
 )
 
-func (a *AppCrud) loadRoutes() {
+func (a *AppUsers) loadRoutes() {
 	usersHandler := &handler.Users{
 		UserRepo: &user.MySQLRepo{DB: a.db},
 		Secret:   a.secret,

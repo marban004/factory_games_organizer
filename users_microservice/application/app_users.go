@@ -11,24 +11,28 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-type AppCrud struct {
-	router http.Handler
-	db     *sql.DB
-	secret []byte
-	config Config
+type AppUsers struct {
+	router     http.Handler
+	db         *sql.DB
+	secret     []byte
+	config     Config
+	certPath   string
+	secretPath string
 }
 
-func New(config Config) *AppCrud {
-	app := &AppCrud{
+func New(config Config) *AppUsers {
+	app := &AppUsers{
 		config: config,
 	}
+	app.secretPath = config.ServerSecretPath
+	app.certPath = config.ServerCertPath
 	app.loadSecret()
 	app.loadDB()
 	app.loadRoutes()
 	return app
 }
 
-func (a *AppCrud) Start(ctx context.Context) error {
+func (a *AppUsers) Start(ctx context.Context) error {
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
 		Handler: a.router,
@@ -49,7 +53,7 @@ func (a *AppCrud) Start(ctx context.Context) error {
 	ch := make(chan error, 1)
 
 	go func() {
-		err = server.ListenAndServe()
+		err = server.ListenAndServeTLS(a.certPath, a.secretPath)
 		if err != nil {
 			ch <- fmt.Errorf("failed to listen to server: %w", err)
 		}
@@ -67,7 +71,7 @@ func (a *AppCrud) Start(ctx context.Context) error {
 	}
 }
 
-func (a *AppCrud) loadDB() {
+func (a *AppUsers) loadDB() {
 	cfg := mysql.NewConfig()
 	cfg.User = "users_microservice"
 	cfg.Passwd = "bxu7%^yhag##KKL"
@@ -82,8 +86,8 @@ func (a *AppCrud) loadDB() {
 }
 
 // implement reading file designated by the path in a.config.ServerCertPath
-func (a *AppCrud) loadSecret() {
-	fileContents, err := os.ReadFile(a.config.ServerCertPath)
+func (a *AppUsers) loadSecret() {
+	fileContents, err := os.ReadFile(a.config.ServerSecretPath)
 	if err != nil {
 		panic("could not open server secret key file")
 	}
