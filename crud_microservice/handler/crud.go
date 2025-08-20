@@ -27,6 +27,42 @@ type JSONData struct {
 	MachinesRecipesList []model.MachinesRecipesInfo
 }
 
+type InsertResponse struct {
+	MachinesInserted        uint
+	ResourcesInserted       uint
+	RecipesInserted         uint
+	RecipesInputsInserted   uint
+	RecipesOutputsInserted  uint
+	MachinesRecipesInserted uint
+}
+
+type UpdateResponse struct {
+	MachinesUpdated        uint
+	ResourcesUpdated       uint
+	RecipesUpdated         uint
+	RecipesInputsUpdated   uint
+	RecipesOutputsUpdated  uint
+	MachinesRecipesUpdated uint
+}
+
+type DeleteInput struct {
+	MachinesIds        []int
+	ResourcesIds       []int
+	RecipesIds         []int
+	RecipesInputsIds   []int
+	RecipesOutputsIds  []int
+	MachinesRecipesIds []int
+}
+
+type DeleteResponse struct {
+	MachinesDeleted        uint
+	ResourcesDeleted       uint
+	RecipesDeleted         uint
+	RecipesInputsDeleted   uint
+	RecipesOutputsDeleted  uint
+	MachinesRecipesDeleted uint
+}
+
 type CRUD struct {
 	MachineRepo       *machine.MySQLRepo
 	ResourceRepo      *resource.MySQLRepo
@@ -37,15 +73,58 @@ type CRUD struct {
 	Secret            []byte
 }
 
+type HealthResponse struct {
+	MicroserviceStatus string
+	DatabaseStatus     string
+}
+
+// Health return the status of microservice and associated database
+//
+//	@Description	Return the status of microservice and it's database. Default working state is signified by status "up".
+//	@Tags			CRUD
+//	@Success		200	{object}	handler.HealthResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/health [get]
+func (h *CRUD) Health(w http.ResponseWriter, r *http.Request) {
+	response := HealthResponse{
+		MicroserviceStatus: "up",
+	}
+	err := h.MachineRepo.DB.PingContext(r.Context())
+	if err != nil {
+		response.DatabaseStatus = "connection disrupted"
+	} else {
+		response.DatabaseStatus = "up"
+	}
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// SelectByID return the record(s) from database
+//
+//	@Description	Return the records from database specified by id. Id(s) is specified for each table in the database. If an id parameter for a particular table is omitted, the records are not retreived from that table. Each parameter can be present multiple times, in which case all records from a particular table, with those ids will be retreived and returned in an array. Data is returned for the user that provided authentication token.
+//	@Param			machines_id			query	integer	false	"Id of machines to be retreived from database"
+//	@Param			resources_id		query	integer	false	"Id of resources to be retreived from database"
+//	@Param			recipes_id			query	integer	false	"Id of recipes to be retreived from database"
+//	@Param			recipes_inputs_id	query	integer	false	"Id of recipes inputs to be retreived from database"
+//	@Param			recipes_outputs_id	query	integer	false	"Id of recipes outputs to be retreived from database"
+//	@Param			machines_recipes_id	query	integer	false	"Id of machines recipes to be retreived from database"
+//	@Tags			CRUD Authorization required
+//	@Success		200	{object}	handler.JSONData
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/selectbyid [get]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) SelectByID(w http.ResponseWriter, r *http.Request) {
-	//parameters for request are:
+	//parameters that are not mentioned in swagger directly:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
-	//machines_id = id of the record from the machines table to be retreived, optional, if multiple values are associated with identifier, records for id each will be retrieved
-	//resources_id = id of the record from the resources table to be retreived, optional, if multiple values are associated with identifier, records for id each will be retrieved
-	//recipes_id = id of the record from the recipes table to be retreived, optional, if multiple values are associated with identifier, records for id each will be retrieved
-	//recipes_inputs_id = id of the record from the recipes_inputs table to be retreived, optional, if multiple values are associated with identifier, records for id each will be retrieved
-	//recipes_outputs_id = id of the record from the recipes_inputs table to be retreived, optional, if multiple values are associated with identifier, records for id each will be retrieved
-	//machines_recipes_id = id of the record from the machines_recipes table to be retreived, optional, this table holds records of which machine can use which recipe, if multiple values are associated with identifier, records for id each will be retrieved
 	jwt := r.URL.Query().Get("jwt")
 	if len(jwt) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -130,21 +209,32 @@ func (h *CRUD) SelectByID(w http.ResponseWriter, r *http.Request) {
 	//test url 127.0.0.1:3000/selectbyid?jwt=l&machines_id=1&machines_id=2&resources_id=1&resources_id=2&recipes_id=1&recipes_id=2&recipes_inputs_id=1&recipes_inputs_id=2&recipes_outputs_id=1&recipes_outputs_id=2&machines_recipes_id=1&machines_recipes_id=2
 }
 
+// Select return the record(s) from database
+//
+//	@Description	Return the records from database specified by id range. Start of range and it's size is specified for each table separately. Size describes number of records to be returned. Ranges include the starting id. Records are only returned for the user that presented authentication token. If start of the range is missing for particular table, then it is assumed to be 1. If size is ommitted, then all records are retreived. If the start of a range is a record belonging to another user, then next record belonging to the user that presented a token is retreived instead.
+//	@Param			machines_id_start			query	integer	false	"Id of first record to be retreived from machines table"
+//	@Param			machines_rows				query	integer	false	"Number of rows to be returned from machines table"
+//	@Param			resources_id_start			query	integer	false	"Id of first record to be retreived from resources table"
+//	@Param			resources_rows				query	integer	false	"Number of rows to be returned from resources table"
+//	@Param			recipes_id_start			query	integer	false	"Id of first record to be retreived from recipes table"
+//	@Param			recipes_rows				query	integer	false	"Number of rows to be returned from recipes table"
+//	@Param			recipes_inputs_id_start		query	integer	false	"Id of first record to be retreived from recipes_inputs table"
+//	@Param			recipes_inputs_rows			query	integer	false	"Number of rows to be returned from recipes_inputs table"
+//	@Param			recipes_outputs_id_start	query	integer	false	"Id of first record to be retreived from recipes_outputs table"
+//	@Param			recipes_outputs_rows		query	integer	false	"Number of rows to be returned from recipes_outputs table"
+//	@Param			machines_recipes_id_start	query	integer	false	"Id of first record to be retreived from machines_recipes table"
+//	@Param			machines_recipes_rows		query	integer	false	"Number of rows to be returned from machines_recipes table"
+//	@Tags			CRUD Authorization required
+//	@Success		200	{object}	handler.JSONData
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/select [get]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) Select(w http.ResponseWriter, r *http.Request) {
-	//parameters for request are:
+	//parameters that are not mentioned in swagger directly:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
-	//machines_id_start = the id of first record to be retreived from machines table, optional, if absent retreives records from the first record in database for the user
-	//machines_rows = the number of records to be retreived from machines table, optional, if absent retreives as many records as possible for the user
-	//resources_id_start = the id of first record to be retreived from resources table, optional, if absent retreives records from the first record in database for the user
-	//resources_rows = the number of records to be retreived from resources table, optional, if absent retreives as many records as possible for the user
-	//recipes_id_start = the id of first record to be retreived from recipes table, optional, if absent retreives records from the first record in database for the user
-	//recipes_rows = the number of records to be retreived from recipes table, optional, if absent retreives as many records as possible for the user
-	//recipes_inputs_id_start = the id of first record to be retreived from recipes_inputs table, optional, if absent retreives records from the first record in database for the user
-	//recipes_inputs_rows = the number of records to be retreived from recipes_inputs table, optional, if absent retreives as many records as possible for the user
-	//recipes_outputs_id_start = the id of first record to be retreived from recipes_outputs table, optional, if absent retreives records from the first record in database for the user
-	//recipes_outputs_rows = the number of records to be retreived from recipes_outputs table, optional, if absent retreives as many records as possible for the user
-	//machines_resources_id_start = the id of first record to be retreived from machines_resources table, optional, if absent retreives records from the first record in database for the user
-	//machines_resources_rows = the number of records to be retreived from machines_resources table, optional, if absent retreives as many records as possible for the user
 	jwt := r.URL.Query().Get("jwt")
 	if len(jwt) <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -302,6 +392,21 @@ func (h *CRUD) Select(w http.ResponseWriter, r *http.Request) {
 	//test url 127.0.0.1:3000/select?jwt=l
 }
 
+// Insert insert record(s) into the database
+//
+//	@Description	Insert data into database. The user to whom the ownership of records is assigned is the user who presented the authentication token.
+//	@Param			insert	body	handler.JSONData	true	"Data to be inserted into database"
+//	@Tags			CRUD Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.InsertResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [post]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -324,14 +429,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Errorf("could not parse received body, reason: %w", err).Error()))
 		return
 	}
-	var response struct {
-		MachinesInserted        uint
-		ResourcesInserted       uint
-		RecipesInserted         uint
-		RecipesInputsInserted   uint
-		RecipesOutputsInserted  uint
-		MachinesRecipesInserted uint
-	}
+	response := InsertResponse{}
 	response.MachinesInserted = 0
 	response.ResourcesInserted = 0
 	response.RecipesInserted = 0
@@ -453,10 +551,25 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Errorf("data has been inserted, but could not generate json representation of response, reason: %w", err).Error()))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(byteJSONRepresentation)
 }
 
+// Update update record(s) in the database
+//
+//	@Description	Updates data in database. Updates the records based on "id" field of an element in the array sent in request body. If a record with a particular id does not belong to the user who presented authentication token, then that record is not updated.
+//	@Param			update	body	handler.JSONData	true	"Data to be updated in the database"
+//	@Tags			CRUD Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.UpdateResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [put]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -479,14 +592,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Errorf("could not parse received body, reason: %w", err).Error()))
 		return
 	}
-	var response struct {
-		MachinesUpdated        uint
-		ResourcesUpdated       uint
-		RecipesUpdated         uint
-		RecipesInputsUpdated   uint
-		RecipesOutputsUpdated  uint
-		MachinesRecipesUpdated uint
-	}
+	response := UpdateResponse{}
 	response.MachinesUpdated = 0
 	response.ResourcesUpdated = 0
 	response.RecipesUpdated = 0
@@ -630,6 +736,21 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteJSONRepresentation)
 }
 
+// Delete delete record(s) in the database
+//
+//	@Description	Deletes data in database. Each table has it's own id list to be deleted. If a record with a particular id does not belong to the user who presented authentication token, then that record is not deleted.
+//	@Param			delete	body	handler.DeleteInput	true	"Data to be deleted in the database"
+//	@Tags			CRUD Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.DeleteResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [delete]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -645,22 +766,8 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
-	var inputData struct {
-		MachinesIds        []int
-		ResourcesIds       []int
-		RecipesIds         []int
-		RecipesInputsIds   []int
-		RecipesOutputsIds  []int
-		MachinesRecipesIds []int
-	}
-	var response struct {
-		MachinesDeleted        uint
-		ResourcesDeleted       uint
-		RecipesDeleted         uint
-		RecipesInputsDeleted   uint
-		RecipesOutputsDeleted  uint
-		MachinesRecipesDeleted uint
-	}
+	inputData := DeleteInput{}
+	response := DeleteResponse{}
 	response.MachinesDeleted = 0
 	response.ResourcesDeleted = 0
 	response.RecipesDeleted = 0
@@ -774,6 +881,20 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteJSONRepresentation)
 }
 
+// Delete delete record(s) in the database
+//
+//	@Description	Deletes all data in the database that belongs to user who presented the authentication token.
+//	@Tags			CRUD Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.DeleteResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/user [delete]
+//
+//	@Security		apiTokenAuth
 func (h *CRUD) DeleteByUser(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -789,14 +910,7 @@ func (h *CRUD) DeleteByUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("provided jwt is invalid"))
 		return
 	}
-	var response struct {
-		MachinesDeleted        uint
-		ResourcesDeleted       uint
-		RecipesDeleted         uint
-		RecipesInputsDeleted   uint
-		RecipesOutputsDeleted  uint
-		MachinesRecipesDeleted uint
-	}
+	response := DeleteResponse{}
 	response.MachinesDeleted = 0
 	response.ResourcesDeleted = 0
 	response.RecipesDeleted = 0

@@ -119,11 +119,11 @@ func findBestrecipe(ctx context.Context, userId int, desiredResourceName string,
 		}
 		query += ")) "
 	}
-	query += ` AND rcp.users_id = '` + fmt.Sprint(userId) + `'
-			AND ro.users_id = '` + fmt.Sprint(userId) + `'
-			AND r.users_id = '` + fmt.Sprint(userId) + `'
-			AND mr.users_id = '` + fmt.Sprint(userId) + `'
-			AND m.users_id = '` + fmt.Sprint(userId) + `'
+	query += ` AND rcp.users_id = ` + fmt.Sprint(userId) + `
+			AND ro.users_id = ` + fmt.Sprint(userId) + `
+			AND r.users_id = ` + fmt.Sprint(userId) + `
+			AND mr.users_id = ` + fmt.Sprint(userId) + `
+			AND m.users_id = ` + fmt.Sprint(userId) + `
 			ORDER BY rcp.default_choice, rate DESC
 			LIMIT 1;`
 	err := db.QueryRowContext(ctx, query).Scan(&(*bestrecipe).ID, &(*bestrecipe).RecipeName, &(*bestrecipe).AmountProduced, &(*bestrecipe).ProductionTime, &(*bestrecipe).MachineName, &(*bestrecipe).MachineSpeed, &(*bestrecipe).Rate, &(*bestrecipe).MachinePowerConsumption, &(*bestrecipe).MachineId)

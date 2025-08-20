@@ -1,0 +1,203 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a alculator microservice for Factory Games Organizer api. It is not meant to be accessed directly.",
+        "title": "Calculator microservice",
+        "contact": {
+            "name": "Ur on your own",
+            "url": "404",
+            "email": "not_my@business.com"
+        },
+        "license": {
+            "name": "You think I have a license?",
+            "url": "404"
+        },
+        "version": "1.0-go-to-hell"
+    },
+    "host": "127.0.0.1:3000",
+    "basePath": "/",
+    "paths": {
+        "/calculate": {
+            "get": {
+                "description": "Calculate the machines and resources needed to produce target resource with provided production rate per second. Alternative Recipe and Alternative Machine parameters can be present multiple times in request query.",
+                "tags": [
+                    "Calculator"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id of users whose data will be used as the base for calculation",
+                        "name": "userid",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource to be produced",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target production rate for the specified resource",
+                        "name": "rate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alternative recipe to take into consideration when calculating production tree",
+                        "name": "alt_recipe",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alternative machine to take into consideration when calculating production tree",
+                        "name": "alt_machine",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/microservicelogiccalculator.ProductionTree"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Return the status of microservice and it's database. Default working state is signified by status \"up\".",
+                "tags": [
+                    "Calculator"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.HealthResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "databaseStatus": {
+                    "type": "string"
+                },
+                "microserviceStatus": {
+                    "type": "string"
+                }
+            }
+        },
+        "microservicelogiccalculator.ProductionTree": {
+            "type": "object",
+            "properties": {
+                "excessResources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/microservicelogiccalculator.ResourceSource"
+                    }
+                },
+                "targetResource": {
+                    "type": "string"
+                },
+                "targetResourceRate": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "targetResourceSourceNode": {
+                    "type": "integer"
+                },
+                "treeNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/microservicelogiccalculator.ProductionTreeNode"
+                    }
+                }
+            }
+        },
+        "microservicelogiccalculator.ProductionTreeNode": {
+            "type": "object",
+            "properties": {
+                "machineName": {
+                    "type": "string"
+                },
+                "machineNumber": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "nodeId": {
+                    "type": "integer"
+                },
+                "producedResourcesPerSecond": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float32"
+                    }
+                },
+                "recipeName": {
+                    "type": "string"
+                },
+                "requiredResourcesPerSecond": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float32"
+                    }
+                },
+                "sourceNodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "totalPowerConsumedkW": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "microservicelogiccalculator.ResourceSource": {
+            "type": "object",
+            "properties": {
+                "excessProducedResourcePerSecond": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "excessResourceName": {
+                    "type": "string"
+                },
+                "nodeId": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

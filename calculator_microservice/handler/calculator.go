@@ -2,6 +2,7 @@ package handler
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,13 +14,25 @@ type Calculator struct {
 	DB *sql.DB
 }
 
-func (c *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
-	//parameters for request are:
-	//userid = user with whose data we want to generate production tree, not optional
-	//resource = resource for which we want to generate production tree, not optional
-	//rate = target production rate per second for specified resource, not optional
-	//alt_recipe = recipe that can be used besides default recipes, optional, can be present multiple times, in such case each value will be included in calculation
-	//alt_machine = machine that can be used besides default machines, optional, can be present multiple times, in such case each value will be included in calculation
+type HealthResponse struct {
+	MicroserviceStatus string
+	DatabaseStatus     string
+}
+
+// Calculate return the calculated production tree for specified resource
+//
+//	@Description	Calculate the machines and resources needed to produce target resource with provided production rate per second. Alternative Recipe and Alternative Machine parameters can be present multiple times in request query.
+//	@Param			userid		query	string	true	"Id of users whose data will be used as the base for calculation"
+//	@Param			resource	query	string	true	"Resource to be produced"
+//	@Param			rate		query	string	true	"Target production rate for the specified resource"
+//	@Param			alt_recipe	query	string	false	"Alternative recipe to take into consideration when calculating production tree"
+//	@Param			alt_machine	query	string	false	"Alternative machine to take into consideration when calculating production tree"
+//	@Tags			Calculator
+//	@Success		200	{object}	microservicelogiccalculator.ProductionTree
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/calculate [get]
+func (h *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 	userId, err := strconv.Atoi(r.URL.Query().Get("userid"))
 	if err != nil || userId <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -40,7 +53,7 @@ func (c *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 	}
 	recipes_names := r.URL.Query()["alt_recipe"]
 	machine_names := r.URL.Query()["alt_machine"]
-	byteJSONRepresentation, err := microservicelogiccalculator.Calculate(r.Context(), userId, desiredResourceName, float32(desiredRate), recipes_names, machine_names, c.DB)
+	byteJSONRepresentation, err := microservicelogiccalculator.Calculate(r.Context(), userId, desiredResourceName, float32(desiredRate), recipes_names, machine_names, h.DB)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Errorf("could not generate production tree for '%s', reason: %w", desiredResourceName, err).Error()))
@@ -50,4 +63,31 @@ func (c *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteJSONRepresentation)
 	// test url 192.168.31.74:3000/calculate?userid=1&resource=reinforced_iron_plate&rate=0.5
 	// w.Write([]byte("works maybe"))
+}
+
+// Health return the status of microservice and associated database
+//
+//	@Description	Return the status of microservice and it's database. Default working state is signified by status "up".
+//	@Tags			Calculator
+//	@Success		200	{object}	handler.HealthResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/health [get]
+func (h *Calculator) Health(w http.ResponseWriter, r *http.Request) {
+	response := HealthResponse{
+		MicroserviceStatus: "up",
+	}
+	err := h.DB.PingContext(r.Context())
+	if err != nil {
+		response.DatabaseStatus = "connection disrupted"
+	} else {
+		response.DatabaseStatus = "up"
+	}
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
 }

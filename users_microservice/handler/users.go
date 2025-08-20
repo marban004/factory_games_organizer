@@ -25,8 +25,68 @@ type Users struct {
 	Secret   []byte
 }
 
+type CreateUserResponse struct {
+	UsersCreated uint
+}
+
+type UpdateUserResponse struct {
+	UsersUpdated uint
+}
+
+type LoginResponse struct {
+	Jwt string
+}
+
+type DeleteUserResponse struct {
+	UsersDeleted uint
+}
+
+type HealthResponse struct {
+	MicroserviceStatus string
+	DatabaseStatus     string
+}
+
+// Health return the status of microservice and associated database
+//
+//	@Description	Return the status of microservice and it's database. Default working state is signified by status "up".
+//	@Tags			Users
+//	@Success		200	{object}	handler.HealthResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/health [get]
+func (h *Users) Health(w http.ResponseWriter, r *http.Request) {
+	response := HealthResponse{
+		MicroserviceStatus: "up",
+	}
+	err := h.UserRepo.DB.PingContext(r.Context())
+	if err != nil {
+		response.DatabaseStatus = "connection disrupted"
+	} else {
+		response.DatabaseStatus = "up"
+	}
+	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// CreateUser create new user
+//
+//	@Description	Insert data of new user into database. Logins of every user must be unique. Passwords must be at least 8 characters long and maximum 72 characters long. Passwords must contain a lowercase and uppercase letter, a digit and a special character that is not a space, quote, double quote or semicolon. Logins must be at least 3 characters long and maximum 64 characters long. Logins cannot contain a space, quote, double quote or semicolon. Logins ignore letter case when logging in.
+//	@Param			createUser	body	handler.JSONData	true	"New user data to be inserted into database"
+//	@Tags			Users
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.CreateUserResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [post]
 func (h *Users) CreateUser(w http.ResponseWriter, r *http.Request) {
-	//no parameters aree required for this request
+	//no parameters are required for this request
 	inputData := JSONData{}
 	err := json.NewDecoder(r.Body).Decode(&inputData)
 	if err != nil {
@@ -72,9 +132,7 @@ func (h *Users) CreateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("database driver does not support returning numbers of rows affected"))
 	}
-	var response struct {
-		UsersCreated uint
-	}
+	response := CreateUserResponse{}
 	response.UsersCreated = uint(noRows)
 	byteJSONRepresentation, err := json.Marshal(response)
 	if err != nil {
@@ -82,10 +140,25 @@ func (h *Users) CreateUser(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Errorf("user has been created, but could not generate json representation of response, reason: %w", err).Error()))
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(byteJSONRepresentation)
 }
 
+// UpdateUser update user's data
+//
+//	@Description	Update user's data in database. The user whose data is updated is the user who presented the authentication token. Same login and password rules apply as when creating a new user account.
+//	@Param			updateUser	body	handler.JSONData	true	"New data of the user to be saved into database"
+//	@Tags			Users Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.UpdateUserResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [put]
+//
+//	@Security		apiTokenAuth
 func (h *Users) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -151,9 +224,7 @@ func (h *Users) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("database driver does not support returning numbers of rows affected"))
 	}
-	var response struct {
-		UsersUpdated uint
-	}
+	response := UpdateUserResponse{}
 	response.UsersUpdated = uint(noRows)
 	byteJSONRepresentation, err := json.Marshal(response)
 	if err != nil {
@@ -165,6 +236,18 @@ func (h *Users) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteJSONRepresentation)
 }
 
+// LoginUser login users
+//
+//	@Description	Authenticate users against the database. If verification is successfull a jwt(authentication token) is returned, that can be used to prove the user's identity to other microservices in Factory Games Organizer api.
+//	@Param			login	body	handler.JSONData	true	"Login data for the user."
+//	@Tags			Users
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.LoginResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format or invalid login data has been sent"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/login [post]
 func (h *Users) LoginUser(w http.ResponseWriter, r *http.Request) {
 	// no parameters are required for this request
 	inputData := JSONData{}
@@ -194,9 +277,7 @@ func (h *Users) LoginUser(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Errorf("could not generate authentication token: %w", err).Error()))
 	}
-	var response struct {
-		Jwt string
-	}
+	response := LoginResponse{}
 	response.Jwt = token
 	byteJSONRepresentation, err := json.Marshal(response)
 	if err != nil {
@@ -208,6 +289,20 @@ func (h *Users) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Write(byteJSONRepresentation)
 }
 
+// DeleteUser delete user's data
+//
+//	@Description	Delete user's data in database. The user whose data is deleted is the user who presented the authentication token.
+//	@Tags			Users Authorization required
+//
+//	@Accept			json
+//
+//	@Success		200	{object}	handler.DeleteUserResponse
+//	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
+//	@Failure		401	{string}	string	"Authentication error"
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/ [delete]
+//
+//	@Security		apiTokenAuth
 func (h *Users) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	//parameters for request are:
 	//jwt = token with dispatcher server secret key, id of user who received the token and issue date of the token, not optional
@@ -233,9 +328,7 @@ func (h *Users) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Write([]byte("database driver does not support returning numbers of rows affected"))
 	}
-	var response struct {
-		UsersDeleted uint
-	}
+	response := DeleteUserResponse{}
 	response.UsersDeleted = uint(noRows)
 	byteJSONRepresentation, err := json.Marshal(response)
 	if err != nil {

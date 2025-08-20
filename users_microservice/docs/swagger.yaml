@@ -1,0 +1,198 @@
+basePath: /
+definitions:
+  handler.CreateUserResponse:
+    properties:
+      usersCreated:
+        type: integer
+    type: object
+  handler.DeleteUserResponse:
+    properties:
+      usersDeleted:
+        type: integer
+    type: object
+  handler.HealthResponse:
+    properties:
+      databaseStatus:
+        type: string
+      microserviceStatus:
+        type: string
+    type: object
+  handler.JSONData:
+    properties:
+      userLogin:
+        type: string
+      userPassword:
+        type: string
+    type: object
+  handler.LoginResponse:
+    properties:
+      jwt:
+        type: string
+    type: object
+  handler.UpdateUserResponse:
+    properties:
+      usersUpdated:
+        type: integer
+    type: object
+host: 127.0.0.1:3000
+info:
+  contact:
+    email: not_my@business.com
+    name: Ur on your own
+    url: "404"
+  description: This is a Users microservice for Factory Games Organizer api. It is
+    not meant to be accessed directly. Access to the microservice should be done through
+    dispatcher microservice.
+  license:
+    name: You think I have a license?
+    url: "404"
+  title: Users microservice
+  version: 1.0-go-to-hell
+paths:
+  /:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user's data in database. The user whose data is deleted
+        is the user who presented the authentication token.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.DeleteUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - Users Authorization required
+    post:
+      consumes:
+      - application/json
+      description: Insert data of new user into database. Logins of every user must
+        be unique. Passwords must be at least 8 characters long and maximum 72 characters
+        long. Passwords must contain a lowercase and uppercase letter, a digit and
+        a special character that is not a space, quote, double quote or semicolon.
+        Logins must be at least 3 characters long and maximum 64 characters long.
+        Logins cannot contain a space, quote, double quote or semicolon. Logins ignore
+        letter case when logging in.
+      parameters:
+      - description: New user data to be inserted into database
+        in: body
+        name: createUser
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.CreateUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update user's data in database. The user whose data is updated
+        is the user who presented the authentication token. Same login and password
+        rules apply as when creating a new user account.
+      parameters:
+      - description: New data of the user to be saved into database
+        in: body
+        name: updateUser
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UpdateUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - Users Authorization required
+  /health:
+    get:
+      description: Return the status of microservice and it's database. Default working
+        state is signified by status "up".
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate users against the database. If verification is successfull
+        a jwt(authentication token) is returned, that can be used to prove the user's
+        identity to other microservices in Factory Games Organizer api.
+      parameters:
+      - description: Login data for the user.
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONData'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format or invalid login data has been sent
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+securityDefinitions:
+  apiTokenAuth:
+    in: query
+    name: jwt
+    type: apiKey
+swagger: "2.0"

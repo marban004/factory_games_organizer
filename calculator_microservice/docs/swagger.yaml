@@ -1,0 +1,142 @@
+basePath: /
+definitions:
+  handler.HealthResponse:
+    properties:
+      databaseStatus:
+        type: string
+      microserviceStatus:
+        type: string
+    type: object
+  microservicelogiccalculator.ProductionTree:
+    properties:
+      excessResources:
+        items:
+          $ref: '#/definitions/microservicelogiccalculator.ResourceSource'
+        type: array
+      targetResource:
+        type: string
+      targetResourceRate:
+        format: float32
+        type: number
+      targetResourceSourceNode:
+        type: integer
+      treeNodes:
+        items:
+          $ref: '#/definitions/microservicelogiccalculator.ProductionTreeNode'
+        type: array
+    type: object
+  microservicelogiccalculator.ProductionTreeNode:
+    properties:
+      machineName:
+        type: string
+      machineNumber:
+        format: float32
+        type: number
+      nodeId:
+        type: integer
+      producedResourcesPerSecond:
+        additionalProperties:
+          format: float32
+          type: number
+        type: object
+      recipeName:
+        type: string
+      requiredResourcesPerSecond:
+        additionalProperties:
+          format: float32
+          type: number
+        type: object
+      sourceNodes:
+        items:
+          type: integer
+        type: array
+      totalPowerConsumedkW:
+        format: int64
+        type: integer
+    type: object
+  microservicelogiccalculator.ResourceSource:
+    properties:
+      excessProducedResourcePerSecond:
+        format: float32
+        type: number
+      excessResourceName:
+        type: string
+      nodeId:
+        type: integer
+    type: object
+host: 127.0.0.1:3000
+info:
+  contact:
+    email: not_my@business.com
+    name: Ur on your own
+    url: "404"
+  description: This is a alculator microservice for Factory Games Organizer api. It
+    is not meant to be accessed directly.
+  license:
+    name: You think I have a license?
+    url: "404"
+  title: Calculator microservice
+  version: 1.0-go-to-hell
+paths:
+  /calculate:
+    get:
+      description: Calculate the machines and resources needed to produce target resource
+        with provided production rate per second. Alternative Recipe and Alternative
+        Machine parameters can be present multiple times in request query.
+      parameters:
+      - description: Id of users whose data will be used as the base for calculation
+        in: query
+        name: userid
+        required: true
+        type: string
+      - description: Resource to be produced
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Target production rate for the specified resource
+        in: query
+        name: rate
+        required: true
+        type: string
+      - description: Alternative recipe to take into consideration when calculating
+          production tree
+        in: query
+        name: alt_recipe
+        type: string
+      - description: Alternative machine to take into consideration when calculating
+          production tree
+        in: query
+        name: alt_machine
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/microservicelogiccalculator.ProductionTree'
+        "400":
+          description: Bad request. One of required parameters is missing
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Calculator
+  /health:
+    get:
+      description: Return the status of microservice and it's database. Default working
+        state is signified by status "up".
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Calculator
+swagger: "2.0"
