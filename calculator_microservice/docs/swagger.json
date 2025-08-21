@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a alculator microservice for Factory Games Organizer api. It is not meant to be accessed directly.",
+        "description": "This is a calculator microservice for Factory Games Organizer api. It is not meant to be accessed directly. Access to the microservice should be done through dispatcher microservice.",
         "title": "Calculator microservice",
         "contact": {
             "name": "Ur on your own",
@@ -14,7 +14,7 @@
         },
         "version": "1.0-go-to-hell"
     },
-    "host": "127.0.0.1:3000",
+    "host": "192.168.100.16:8080",
     "basePath": "/",
     "paths": {
         "/calculate": {

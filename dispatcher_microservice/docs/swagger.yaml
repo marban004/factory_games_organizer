@@ -1,0 +1,59 @@
+basePath: /
+definitions:
+  handler.HealthResponse:
+    properties:
+      calculatorMicroservice:
+        items:
+          $ref: '#/definitions/handler.MicroserviceHealth'
+        type: array
+      crudMicroservice:
+        items:
+          $ref: '#/definitions/handler.MicroserviceHealth'
+        type: array
+      dispatcherStatus:
+        type: string
+      usersMicroservice:
+        items:
+          $ref: '#/definitions/handler.MicroserviceHealth'
+        type: array
+    type: object
+  handler.MicroserviceHealth:
+    properties:
+      databaseStatus:
+        type: string
+      microserviceStatus:
+        type: string
+      microserviceURl:
+        type: string
+    type: object
+host: 192.168.100.16:3000
+info:
+  contact:
+    email: not_my@business.com
+    name: Ur on your own
+    url: "404"
+  description: This is a dispatcher microservice for Factory Games Organizer api.
+    Api is responsible for creating, updating and authenicating api users, CRUD operations
+    on database associated with the api and provides production calculator service.
+  license:
+    name: You think I have a license?
+    url: "404"
+  title: Dispatcher microservice
+  version: 1.0-go-to-hell
+paths:
+  /health:
+    get:
+      description: Return the status of microservice and it's database. Default working
+        state is signified by status "up".
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.HealthResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - All microservices
+swagger: "2.0"

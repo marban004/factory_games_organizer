@@ -1,0 +1,85 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a dispatcher microservice for Factory Games Organizer api. Api is responsible for creating, updating and authenicating api users, CRUD operations on database associated with the api and provides production calculator service.",
+        "title": "Dispatcher microservice",
+        "contact": {
+            "name": "Ur on your own",
+            "url": "404",
+            "email": "not_my@business.com"
+        },
+        "license": {
+            "name": "You think I have a license?",
+            "url": "404"
+        },
+        "version": "1.0-go-to-hell"
+    },
+    "host": "192.168.100.16:3000",
+    "basePath": "/",
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Return the status of microservice and it's database. Default working state is signified by status \"up\".",
+                "tags": [
+                    "All microservices"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.HealthResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "calculatorMicroservice": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.MicroserviceHealth"
+                    }
+                },
+                "crudMicroservice": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.MicroserviceHealth"
+                    }
+                },
+                "dispatcherStatus": {
+                    "type": "string"
+                },
+                "usersMicroservice": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.MicroserviceHealth"
+                    }
+                }
+            }
+        },
+        "handler.MicroserviceHealth": {
+            "type": "object",
+            "properties": {
+                "databaseStatus": {
+                    "type": "string"
+                },
+                "microserviceStatus": {
+                    "type": "string"
+                },
+                "microserviceURl": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

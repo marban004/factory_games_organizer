@@ -211,11 +211,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0-go-to-hell",
-	Host:             "127.0.0.1:3000",
+	Host:             "192.168.100.16:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Calculator microservice",
-	Description:      "This is a alculator microservice for Factory Games Organizer api. It is not meant to be accessed directly.",
+	Description:      "This is a calculator microservice for Factory Games Organizer api. It is not meant to be accessed directly. Access to the microservice should be done through dispatcher microservice.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
