@@ -25,6 +25,10 @@ import (
 //	@BasePath	/
 
 //	@OpenAPIDefinition(servers	= {@Server(url = "/", description = "a microservice host"), @Server(url = "/", description = "dispatcher microservice, microservices are differentiated by port number")})
+//	@securityDefinitions.apikey	apiTokenAuth
+//
+//	@in							query
+//	@name						jwt
 //
 // host is WAN address of router, need to set up port forwarding to redirect to LAN address of my laptop, also set the address to be static on my laptop, so port forwarding always goes to it.
 func main() {

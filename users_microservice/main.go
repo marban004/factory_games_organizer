@@ -25,7 +25,6 @@ import (
 //	@BasePath	/
 
 //	@OpenAPIDefinition(servers	= {@Server(url = "/", description = "a microservice host"), @Server(url = "/", description = "CRUD microservice, microservices are differentiated by port number")})
-//
 //	@securityDefinitions.apikey	apiTokenAuth
 //
 //	@in							query

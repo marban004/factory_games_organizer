@@ -17,6 +17,456 @@
     "host": "192.168.100.16:3000",
     "basePath": "/",
     "paths": {
+        "/calculator/calculate": {
+            "get": {
+                "description": "Calculate the machines and resources needed to produce target resource with provided production rate per second. Alternative Recipe and Alternative Machine parameters can be present multiple times in request query.",
+                "tags": [
+                    "Calculator"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id of users whose data will be used as the base for calculation",
+                        "name": "userid",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Resource to be produced",
+                        "name": "resource",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target production rate for the specified resource",
+                        "name": "rate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alternative recipe to take into consideration when calculating production tree",
+                        "name": "alt_recipe",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alternative machine to take into consideration when calculating production tree",
+                        "name": "alt_machine",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.ProductionTreeCalculator"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/crud": {
+            "put": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Updates data in database. Updates the records based on \"id\" field of an element in the array sent in request body. If a record with a particular id does not belong to the user who presented authentication token, then that record is not updated.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "description": "Data to be updated in the database",
+                        "name": "update",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataCrud"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateResponseCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Insert data into database. The user to whom the ownership of records is assigned is the user who presented the authentication token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "description": "Data to be inserted into database",
+                        "name": "insert",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataCrud"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.InsertResponseCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Deletes data in database. Each table has it's own id list to be deleted. If a record with a particular id does not belong to the user who presented authentication token, then that record is not deleted.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "description": "Data to be deleted in the database",
+                        "name": "delete",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteInputCrud"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteResponseCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/crud/select": {
+            "get": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Return the records from database specified by id range. Start of range and it's size is specified for each table separately. Size describes number of records to be returned. Ranges include the starting id. Records are only returned for the user that presented authentication token. If start of the range is missing for particular table, then it is assumed to be 1. If size is ommitted, then all records are retreived. If the start of a range is a record belonging to another user, then next record belonging to the user that presented a token is retreived instead.",
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from machines table",
+                        "name": "machines_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from machines table",
+                        "name": "machines_rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from resources table",
+                        "name": "resources_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from resources table",
+                        "name": "resources_rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from recipes table",
+                        "name": "recipes_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from recipes table",
+                        "name": "recipes_rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from recipes_inputs table",
+                        "name": "recipes_inputs_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from recipes_inputs table",
+                        "name": "recipes_inputs_rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from recipes_outputs table",
+                        "name": "recipes_outputs_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from recipes_outputs table",
+                        "name": "recipes_outputs_rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of first record to be retreived from machines_recipes table",
+                        "name": "machines_recipes_id_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of rows to be returned from machines_recipes table",
+                        "name": "machines_recipes_rows",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/crud/selectbyid": {
+            "get": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Return the records from database specified by id. Id(s) is specified for each table in the database. If an id parameter for a particular table is omitted, the records are not retreived from that table. Each parameter can be present multiple times, in which case all records from a particular table, with those ids will be retreived and returned in an array. Data is returned for the user that provided authentication token.",
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Id of machines to be retreived from database",
+                        "name": "machines_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of resources to be retreived from database",
+                        "name": "resources_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of recipes to be retreived from database",
+                        "name": "recipes_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of recipes inputs to be retreived from database",
+                        "name": "recipes_inputs_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of recipes outputs to be retreived from database",
+                        "name": "recipes_outputs_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Id of machines recipes to be retreived from database",
+                        "name": "machines_recipes_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/crud/user": {
+            "delete": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Deletes all data in the database that belongs to user who presented the authentication token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "CRUD Authorization required"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteResponseCrud"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "Return the status of microservice and it's database. Default working state is signified by status \"up\".",
@@ -38,9 +488,264 @@
                     }
                 }
             }
+        },
+        "/users": {
+            "put": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Update user's data in database. The user whose data is updated is the user who presented the authentication token. Same login and password rules apply as when creating a new user account.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users Authorization required"
+                ],
+                "parameters": [
+                    {
+                        "description": "New data of the user to be saved into database",
+                        "name": "updateUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataUsers"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.UpdateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Insert data of new user into database. Logins of every user must be unique. Passwords must be at least 8 characters long and maximum 72 characters long. Passwords must contain a lowercase and uppercase letter, a digit and a special character that is not a space, quote, double quote or semicolon. Logins must be at least 3 characters long and maximum 64 characters long. Logins cannot contain a space, quote, double quote or semicolon. Logins ignore letter case when logging in.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "description": "New user data to be inserted into database",
+                        "name": "createUser",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataUsers"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.CreateUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "apiTokenAuth": []
+                    }
+                ],
+                "description": "Delete user's data in database. The user whose data is deleted is the user who presented the authentication token.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users Authorization required"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.DeleteUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "401": {
+                        "description": "Authentication error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "post": {
+                "description": "Authenticate users against the database. If verification is successfull a jwt(authentication token) is returned, that can be used to prove the user's identity to other microservices in Factory Games Organizer api.",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "parameters": [
+                    {
+                        "description": "Login data for the user.",
+                        "name": "login",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.JSONDataUsers"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request. One of required parameters is missing or is not of valid format or invalid login data has been sent",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "handler.CreateUserResponse": {
+            "type": "object",
+            "properties": {
+                "usersCreated": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.DeleteInputCrud": {
+            "type": "object",
+            "properties": {
+                "machinesIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "machinesRecipesIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "recipesIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "recipesInputsIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "recipesOutputsIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "resourcesIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "handler.DeleteResponseCrud": {
+            "type": "object",
+            "properties": {
+                "machinesDeleted": {
+                    "type": "integer"
+                },
+                "machinesRecipesDeleted": {
+                    "type": "integer"
+                },
+                "recipesDeleted": {
+                    "type": "integer"
+                },
+                "recipesInputsDeleted": {
+                    "type": "integer"
+                },
+                "recipesOutputsDeleted": {
+                    "type": "integer"
+                },
+                "resourcesDeleted": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.DeleteUserResponse": {
+            "type": "object",
+            "properties": {
+                "usersDeleted": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.HealthResponse": {
             "type": "object",
             "properties": {
@@ -67,6 +772,143 @@
                 }
             }
         },
+        "handler.InsertResponseCrud": {
+            "type": "object",
+            "properties": {
+                "machinesInserted": {
+                    "type": "integer"
+                },
+                "machinesRecipesInserted": {
+                    "type": "integer"
+                },
+                "recipesInputsInserted": {
+                    "type": "integer"
+                },
+                "recipesInserted": {
+                    "type": "integer"
+                },
+                "recipesOutputsInserted": {
+                    "type": "integer"
+                },
+                "resourcesInserted": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.JSONDataCrud": {
+            "type": "object",
+            "properties": {
+                "machinesList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.MachineInfo"
+                    }
+                },
+                "machinesRecipesList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.MachinesRecipesInfo"
+                    }
+                },
+                "recipesInputsList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.RecipeInputOutputInfo"
+                    }
+                },
+                "recipesList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.RecipeInfo"
+                    }
+                },
+                "recipesOutputsList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.RecipeInputOutputInfo"
+                    }
+                },
+                "resourcesList": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ResourceInfo"
+                    }
+                }
+            }
+        },
+        "handler.JSONDataUsers": {
+            "type": "object",
+            "properties": {
+                "userLogin": {
+                    "type": "string"
+                },
+                "userPassword": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "jwt": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.MachineInfo": {
+            "type": "object",
+            "properties": {
+                "defaultChoice": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "inputsLiquid": {
+                    "type": "integer"
+                },
+                "inputsSolid": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "outputsLiquid": {
+                    "type": "integer"
+                },
+                "outputsSolid": {
+                    "type": "integer"
+                },
+                "powerConsumptionKw": {
+                    "type": "integer"
+                },
+                "speed": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "usersId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.MachinesRecipesInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "machinesId": {
+                    "type": "integer"
+                },
+                "recipesId": {
+                    "type": "integer"
+                },
+                "usersId": {
+                    "type": "integer"
+                }
+            }
+        },
         "handler.MicroserviceHealth": {
             "type": "object",
             "properties": {
@@ -80,6 +922,190 @@
                     "type": "string"
                 }
             }
+        },
+        "handler.ProductionTreeCalculator": {
+            "type": "object",
+            "properties": {
+                "excessResources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ResourceSource"
+                    }
+                },
+                "targetResource": {
+                    "type": "string"
+                },
+                "targetResourceRate": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "targetResourceSourceNode": {
+                    "type": "integer"
+                },
+                "treeNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handler.ProductionTreeNode"
+                    }
+                }
+            }
+        },
+        "handler.ProductionTreeNode": {
+            "type": "object",
+            "properties": {
+                "machineName": {
+                    "type": "string"
+                },
+                "machineNumber": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "nodeId": {
+                    "type": "integer"
+                },
+                "producedResourcesPerSecond": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float32"
+                    }
+                },
+                "recipeName": {
+                    "type": "string"
+                },
+                "requiredResourcesPerSecond": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number",
+                        "format": "float32"
+                    }
+                },
+                "sourceNodes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "totalPowerConsumedkW": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "handler.RecipeInfo": {
+            "type": "object",
+            "properties": {
+                "defaultChoice": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "productionTimeS": {
+                    "type": "integer"
+                },
+                "usersId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.RecipeInputOutputInfo": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "recipesId": {
+                    "type": "integer"
+                },
+                "resourcesId": {
+                    "type": "integer"
+                },
+                "usersId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.ResourceInfo": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "liquid": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "resourceUnit": {
+                    "type": "string"
+                },
+                "usersId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.ResourceSource": {
+            "type": "object",
+            "properties": {
+                "excessProducedResourcePerSecond": {
+                    "type": "number",
+                    "format": "float32"
+                },
+                "excessResourceName": {
+                    "type": "string"
+                },
+                "nodeId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.UpdateResponseCrud": {
+            "type": "object",
+            "properties": {
+                "machinesRecipesUpdated": {
+                    "type": "integer"
+                },
+                "machinesUpdated": {
+                    "type": "integer"
+                },
+                "recipesInputsUpdated": {
+                    "type": "integer"
+                },
+                "recipesOutputsUpdated": {
+                    "type": "integer"
+                },
+                "recipesUpdated": {
+                    "type": "integer"
+                },
+                "resourcesUpdated": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.UpdateUserResponse": {
+            "type": "object",
+            "properties": {
+                "usersUpdated": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "apiTokenAuth": {
+            "type": "apiKey",
+            "name": "jwt",
+            "in": "query"
         }
     }
 }

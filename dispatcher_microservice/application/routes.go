@@ -3,6 +3,7 @@ package application
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
@@ -12,14 +13,10 @@ import (
 )
 
 func (a *AppDispatcher) loadRoutes() {
-	usersHandler := &handler.Dispatcher{
-		Secret:                           a.secret,
+	dispatcherhandler := &handler.Dispatcher{
 		UsersMicroservicesAddresses:      a.usersMicroservicesAddresses,
 		CrudMicroservicesAddresses:       a.crudMicroservicesAddresses,
 		CalculatorMicroservicesAddresses: a.calculatorMicroservicesAddresses,
-		NextUsers:                        0,
-		NextCrud:                         0,
-		Nextcalculator:                   0,
 	}
 	router := chi.NewRouter()
 
@@ -37,9 +34,71 @@ func (a *AppDispatcher) loadRoutes() {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	router.Get("/health", usersHandler.Health)
+	router.Get("/health", dispatcherhandler.Health)
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("https://localhost:%d/swagger/doc.json", a.config.ServerPort)), //The url pointing to API definition
+		httpSwagger.URL(fmt.Sprintf("https://192.168.100.16:%d/swagger/doc.json", a.config.ServerPort)), //The url pointing to API definition
 	))
+	router.Route("/users", a.loadUserRoutes)
+	router.Route("/crud", a.loadCrudRoutes)
+	router.Route("/calculator", a.loadCalculatorRoutes)
 	a.router = router
+}
+
+func (a *AppDispatcher) loadUserRoutes(router chi.Router) {
+	dispatcherHandlerUsers := handler.DispatcherUsers{
+		CommonHandlerFunctions: handler.CommonHandlerFunctions{
+			Secret:           a.secret,
+			NextMicroservice: 0,
+			Client: &http.Client{
+				Timeout: 10 * time.Second,
+			},
+		},
+		UsersMicroservicesAddresses: a.usersMicroservicesAddresses,
+	}
+	router.Post("/login", dispatcherHandlerUsers.LoginUser)
+	router.Post("/", dispatcherHandlerUsers.CreateUser)
+	router.Put("/", dispatcherHandlerUsers.UpdateUser)
+	router.Delete("/", dispatcherHandlerUsers.DeleteUser)
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("https://%s/swagger/doc.json", dispatcherHandlerUsers.UsersMicroservicesAddresses[0])), //The url pointing to API definition
+	))
+}
+
+func (a *AppDispatcher) loadCrudRoutes(router chi.Router) {
+	dispatcherHandlerCrud := handler.DispatcherCrud{
+		CommonHandlerFunctions: handler.CommonHandlerFunctions{
+			Secret:           a.secret,
+			NextMicroservice: 0,
+			Client: &http.Client{
+				Timeout: 10 * time.Second,
+			},
+		},
+		CrudMicroservicesAddresses: a.crudMicroservicesAddresses,
+	}
+	router.Get("/selectbyid", dispatcherHandlerCrud.SelectByID)
+	router.Get("/select", dispatcherHandlerCrud.Select)
+	router.Post("/", dispatcherHandlerCrud.Insert)
+	router.Put("/", dispatcherHandlerCrud.Update)
+	router.Delete("/", dispatcherHandlerCrud.Delete)
+	router.Delete("/user", dispatcherHandlerCrud.DeleteByUser)
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("https://%s/swagger/doc.json", dispatcherHandlerCrud.CrudMicroservicesAddresses[0])), //The url pointing to API definition
+	))
+}
+
+func (a *AppDispatcher) loadCalculatorRoutes(router chi.Router) {
+	dispatcherHandlerCalculator := handler.DispatcherCalculator{
+		CommonHandlerFunctions: handler.CommonHandlerFunctions{
+			Secret:           a.secret,
+			NextMicroservice: 0,
+			Client: &http.Client{
+				Timeout: 10 * time.Second,
+			},
+		},
+		CalculatorMicroservicesAddresses: a.calculatorMicroservicesAddresses,
+	}
+	router.Get("/calculate", dispatcherHandlerCalculator.Calculate)
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("https://%s/swagger/doc.json", dispatcherHandlerCalculator.CalculatorMicroservicesAddresses[0])), //The url pointing to API definition
+	))
 }

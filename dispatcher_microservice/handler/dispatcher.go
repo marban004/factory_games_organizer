@@ -6,52 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
-type JSONData struct {
-	UserLogin    string
-	UserPassword string
-}
-
 type Dispatcher struct {
-	Secret                           []byte
 	UsersMicroservicesAddresses      []string
 	CrudMicroservicesAddresses       []string
 	CalculatorMicroservicesAddresses []string
-	NextUsers                        uint
-	NextCrud                         uint
-	Nextcalculator                   uint
-}
-
-type CreateUserResponse struct {
-	UsersCreated uint
-}
-
-type UpdateUserResponse struct {
-	UsersUpdated uint
-}
-
-type LoginResponse struct {
-	Jwt string
-}
-
-type DeleteUserResponse struct {
-	UsersDeleted uint
-}
-
-type MicroserviceHealth struct {
-	MicroserviceURl    string
-	MicroserviceStatus string
-	DatabaseStatus     string
-}
-
-type HealthResponse struct {
-	DispatcherStatus       string
-	UsersMicroservice      []MicroserviceHealth
-	CrudMicroservice       []MicroserviceHealth
-	CalculatorMicroservice []MicroserviceHealth
 }
 
 // Health return the status of microservices and their associated databases
@@ -132,30 +92,6 @@ func (h *Dispatcher) checkMicroservicesHealth(ctx context.Context, endpointRespo
 		*endpointResponseArray = append(*endpointResponseArray, microserviceStatus)
 	}
 	return nil
-}
-
-// todo: implement verification of jwt
-func (h *Dispatcher) verifyJWT(jwtString string) (bool, int) {
-	token, err := jwt.Parse(jwtString, func(*jwt.Token) (interface{}, error) {
-		return h.Secret, nil
-	}, jwt.WithValidMethods([]string{"HS256"}))
-	if err != nil {
-		return false, 0
-	}
-	if !token.Valid {
-		return false, 0
-	}
-	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["userId"].(float64)
-	expTime := int64(claims["exp"].(float64))
-	issueTime := int64(claims["iat"].(float64))
-	if time.Now().Unix() > expTime {
-		return false, 0
-	}
-	if time.Now().Unix() <= issueTime {
-		return false, 0
-	}
-	return true, int(userId)
 }
 
 // func (h *Users) convertArrToInt(input []string) []int {

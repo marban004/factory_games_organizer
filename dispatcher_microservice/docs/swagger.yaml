@@ -1,5 +1,57 @@
 basePath: /
 definitions:
+  handler.CreateUserResponse:
+    properties:
+      usersCreated:
+        type: integer
+    type: object
+  handler.DeleteInputCrud:
+    properties:
+      machinesIds:
+        items:
+          type: integer
+        type: array
+      machinesRecipesIds:
+        items:
+          type: integer
+        type: array
+      recipesIds:
+        items:
+          type: integer
+        type: array
+      recipesInputsIds:
+        items:
+          type: integer
+        type: array
+      recipesOutputsIds:
+        items:
+          type: integer
+        type: array
+      resourcesIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  handler.DeleteResponseCrud:
+    properties:
+      machinesDeleted:
+        type: integer
+      machinesRecipesDeleted:
+        type: integer
+      recipesDeleted:
+        type: integer
+      recipesInputsDeleted:
+        type: integer
+      recipesOutputsDeleted:
+        type: integer
+      resourcesDeleted:
+        type: integer
+    type: object
+  handler.DeleteUserResponse:
+    properties:
+      usersDeleted:
+        type: integer
+    type: object
   handler.HealthResponse:
     properties:
       calculatorMicroservice:
@@ -17,6 +69,96 @@ definitions:
           $ref: '#/definitions/handler.MicroserviceHealth'
         type: array
     type: object
+  handler.InsertResponseCrud:
+    properties:
+      machinesInserted:
+        type: integer
+      machinesRecipesInserted:
+        type: integer
+      recipesInputsInserted:
+        type: integer
+      recipesInserted:
+        type: integer
+      recipesOutputsInserted:
+        type: integer
+      resourcesInserted:
+        type: integer
+    type: object
+  handler.JSONDataCrud:
+    properties:
+      machinesList:
+        items:
+          $ref: '#/definitions/handler.MachineInfo'
+        type: array
+      machinesRecipesList:
+        items:
+          $ref: '#/definitions/handler.MachinesRecipesInfo'
+        type: array
+      recipesInputsList:
+        items:
+          $ref: '#/definitions/handler.RecipeInputOutputInfo'
+        type: array
+      recipesList:
+        items:
+          $ref: '#/definitions/handler.RecipeInfo'
+        type: array
+      recipesOutputsList:
+        items:
+          $ref: '#/definitions/handler.RecipeInputOutputInfo'
+        type: array
+      resourcesList:
+        items:
+          $ref: '#/definitions/handler.ResourceInfo'
+        type: array
+    type: object
+  handler.JSONDataUsers:
+    properties:
+      userLogin:
+        type: string
+      userPassword:
+        type: string
+    type: object
+  handler.LoginResponse:
+    properties:
+      jwt:
+        type: string
+    type: object
+  handler.MachineInfo:
+    properties:
+      defaultChoice:
+        format: int32
+        type: integer
+      id:
+        type: integer
+      inputsLiquid:
+        type: integer
+      inputsSolid:
+        type: integer
+      name:
+        type: string
+      outputsLiquid:
+        type: integer
+      outputsSolid:
+        type: integer
+      powerConsumptionKw:
+        type: integer
+      speed:
+        format: float32
+        type: number
+      usersId:
+        type: integer
+    type: object
+  handler.MachinesRecipesInfo:
+    properties:
+      id:
+        type: integer
+      machinesId:
+        type: integer
+      recipesId:
+        type: integer
+      usersId:
+        type: integer
+    type: object
   handler.MicroserviceHealth:
     properties:
       databaseStatus:
@@ -25,6 +167,124 @@ definitions:
         type: string
       microserviceURl:
         type: string
+    type: object
+  handler.ProductionTreeCalculator:
+    properties:
+      excessResources:
+        items:
+          $ref: '#/definitions/handler.ResourceSource'
+        type: array
+      targetResource:
+        type: string
+      targetResourceRate:
+        format: float32
+        type: number
+      targetResourceSourceNode:
+        type: integer
+      treeNodes:
+        items:
+          $ref: '#/definitions/handler.ProductionTreeNode'
+        type: array
+    type: object
+  handler.ProductionTreeNode:
+    properties:
+      machineName:
+        type: string
+      machineNumber:
+        format: float32
+        type: number
+      nodeId:
+        type: integer
+      producedResourcesPerSecond:
+        additionalProperties:
+          format: float32
+          type: number
+        type: object
+      recipeName:
+        type: string
+      requiredResourcesPerSecond:
+        additionalProperties:
+          format: float32
+          type: number
+        type: object
+      sourceNodes:
+        items:
+          type: integer
+        type: array
+      totalPowerConsumedkW:
+        format: int64
+        type: integer
+    type: object
+  handler.RecipeInfo:
+    properties:
+      defaultChoice:
+        format: int32
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      productionTimeS:
+        type: integer
+      usersId:
+        type: integer
+    type: object
+  handler.RecipeInputOutputInfo:
+    properties:
+      amount:
+        type: integer
+      id:
+        type: integer
+      recipesId:
+        type: integer
+      resourcesId:
+        type: integer
+      usersId:
+        type: integer
+    type: object
+  handler.ResourceInfo:
+    properties:
+      id:
+        type: integer
+      liquid:
+        format: int32
+        type: integer
+      name:
+        type: string
+      resourceUnit:
+        type: string
+      usersId:
+        type: integer
+    type: object
+  handler.ResourceSource:
+    properties:
+      excessProducedResourcePerSecond:
+        format: float32
+        type: number
+      excessResourceName:
+        type: string
+      nodeId:
+        type: integer
+    type: object
+  handler.UpdateResponseCrud:
+    properties:
+      machinesRecipesUpdated:
+        type: integer
+      machinesUpdated:
+        type: integer
+      recipesInputsUpdated:
+        type: integer
+      recipesOutputsUpdated:
+        type: integer
+      recipesUpdated:
+        type: integer
+      resourcesUpdated:
+        type: integer
+    type: object
+  handler.UpdateUserResponse:
+    properties:
+      usersUpdated:
+        type: integer
     type: object
 host: 192.168.100.16:3000
 info:
@@ -41,6 +301,322 @@ info:
   title: Dispatcher microservice
   version: 1.0-go-to-hell
 paths:
+  /calculator/calculate:
+    get:
+      description: Calculate the machines and resources needed to produce target resource
+        with provided production rate per second. Alternative Recipe and Alternative
+        Machine parameters can be present multiple times in request query.
+      parameters:
+      - description: Id of users whose data will be used as the base for calculation
+        in: query
+        name: userid
+        required: true
+        type: string
+      - description: Resource to be produced
+        in: query
+        name: resource
+        required: true
+        type: string
+      - description: Target production rate for the specified resource
+        in: query
+        name: rate
+        required: true
+        type: string
+      - description: Alternative recipe to take into consideration when calculating
+          production tree
+        in: query
+        name: alt_recipe
+        type: string
+      - description: Alternative machine to take into consideration when calculating
+          production tree
+        in: query
+        name: alt_machine
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.ProductionTreeCalculator'
+        "400":
+          description: Bad request. One of required parameters is missing
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Calculator
+  /crud:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes data in database. Each table has it's own id list to be
+        deleted. If a record with a particular id does not belong to the user who
+        presented authentication token, then that record is not deleted.
+      parameters:
+      - description: Data to be deleted in the database
+        in: body
+        name: delete
+        required: true
+        schema:
+          $ref: '#/definitions/handler.DeleteInputCrud'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.DeleteResponseCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
+    post:
+      consumes:
+      - application/json
+      description: Insert data into database. The user to whom the ownership of records
+        is assigned is the user who presented the authentication token.
+      parameters:
+      - description: Data to be inserted into database
+        in: body
+        name: insert
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONDataCrud'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.InsertResponseCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
+    put:
+      consumes:
+      - application/json
+      description: Updates data in database. Updates the records based on "id" field
+        of an element in the array sent in request body. If a record with a particular
+        id does not belong to the user who presented authentication token, then that
+        record is not updated.
+      parameters:
+      - description: Data to be updated in the database
+        in: body
+        name: update
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONDataCrud'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UpdateResponseCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
+  /crud/select:
+    get:
+      description: Return the records from database specified by id range. Start of
+        range and it's size is specified for each table separately. Size describes
+        number of records to be returned. Ranges include the starting id. Records
+        are only returned for the user that presented authentication token. If start
+        of the range is missing for particular table, then it is assumed to be 1.
+        If size is ommitted, then all records are retreived. If the start of a range
+        is a record belonging to another user, then next record belonging to the user
+        that presented a token is retreived instead.
+      parameters:
+      - description: Id of first record to be retreived from machines table
+        in: query
+        name: machines_id_start
+        type: integer
+      - description: Number of rows to be returned from machines table
+        in: query
+        name: machines_rows
+        type: integer
+      - description: Id of first record to be retreived from resources table
+        in: query
+        name: resources_id_start
+        type: integer
+      - description: Number of rows to be returned from resources table
+        in: query
+        name: resources_rows
+        type: integer
+      - description: Id of first record to be retreived from recipes table
+        in: query
+        name: recipes_id_start
+        type: integer
+      - description: Number of rows to be returned from recipes table
+        in: query
+        name: recipes_rows
+        type: integer
+      - description: Id of first record to be retreived from recipes_inputs table
+        in: query
+        name: recipes_inputs_id_start
+        type: integer
+      - description: Number of rows to be returned from recipes_inputs table
+        in: query
+        name: recipes_inputs_rows
+        type: integer
+      - description: Id of first record to be retreived from recipes_outputs table
+        in: query
+        name: recipes_outputs_id_start
+        type: integer
+      - description: Number of rows to be returned from recipes_outputs table
+        in: query
+        name: recipes_outputs_rows
+        type: integer
+      - description: Id of first record to be retreived from machines_recipes table
+        in: query
+        name: machines_recipes_id_start
+        type: integer
+      - description: Number of rows to be returned from machines_recipes table
+        in: query
+        name: machines_recipes_rows
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.JSONDataCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
+  /crud/selectbyid:
+    get:
+      description: Return the records from database specified by id. Id(s) is specified
+        for each table in the database. If an id parameter for a particular table
+        is omitted, the records are not retreived from that table. Each parameter
+        can be present multiple times, in which case all records from a particular
+        table, with those ids will be retreived and returned in an array. Data is
+        returned for the user that provided authentication token.
+      parameters:
+      - description: Id of machines to be retreived from database
+        in: query
+        name: machines_id
+        type: integer
+      - description: Id of resources to be retreived from database
+        in: query
+        name: resources_id
+        type: integer
+      - description: Id of recipes to be retreived from database
+        in: query
+        name: recipes_id
+        type: integer
+      - description: Id of recipes inputs to be retreived from database
+        in: query
+        name: recipes_inputs_id
+        type: integer
+      - description: Id of recipes outputs to be retreived from database
+        in: query
+        name: recipes_outputs_id
+        type: integer
+      - description: Id of machines recipes to be retreived from database
+        in: query
+        name: machines_recipes_id
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.JSONDataCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
+  /crud/user:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes all data in the database that belongs to user who presented
+        the authentication token.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.DeleteResponseCrud'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - CRUD Authorization required
   /health:
     get:
       description: Return the status of microservice and it's database. Default working
@@ -56,4 +632,135 @@ paths:
             type: string
       tags:
       - All microservices
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user's data in database. The user whose data is deleted
+        is the user who presented the authentication token.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.DeleteUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - Users Authorization required
+    post:
+      consumes:
+      - application/json
+      description: Insert data of new user into database. Logins of every user must
+        be unique. Passwords must be at least 8 characters long and maximum 72 characters
+        long. Passwords must contain a lowercase and uppercase letter, a digit and
+        a special character that is not a space, quote, double quote or semicolon.
+        Logins must be at least 3 characters long and maximum 64 characters long.
+        Logins cannot contain a space, quote, double quote or semicolon. Logins ignore
+        letter case when logging in.
+      parameters:
+      - description: New user data to be inserted into database
+        in: body
+        name: createUser
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONDataUsers'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.CreateUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update user's data in database. The user whose data is updated
+        is the user who presented the authentication token. Same login and password
+        rules apply as when creating a new user account.
+      parameters:
+      - description: New data of the user to be saved into database
+        in: body
+        name: updateUser
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONDataUsers'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.UpdateUserResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format
+          schema:
+            type: string
+        "401":
+          description: Authentication error
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      security:
+      - apiTokenAuth: []
+      tags:
+      - Users Authorization required
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate users against the database. If verification is successfull
+        a jwt(authentication token) is returned, that can be used to prove the user's
+        identity to other microservices in Factory Games Organizer api.
+      parameters:
+      - description: Login data for the user.
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/handler.JSONDataUsers'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad request. One of required parameters is missing or is not
+            of valid format or invalid login data has been sent
+          schema:
+            type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+securityDefinitions:
+  apiTokenAuth:
+    in: query
+    name: jwt
+    type: apiKey
 swagger: "2.0"
