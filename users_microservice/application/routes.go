@@ -39,7 +39,7 @@ func (a *AppUsers) loadRoutes() {
 	router.Put("/", usersHandler.UpdateUser)
 	router.Delete("/", usersHandler.DeleteUser)
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("https://localhost:%d/swagger/doc.json", a.config.ServerPort)), //The url pointing to API definition
+		httpSwagger.URL(fmt.Sprintf("https://%s:%d/swagger/doc.json", a.config.Host, a.config.ServerPort)), //The url pointing to API definition
 	))
 	a.router = router
 }

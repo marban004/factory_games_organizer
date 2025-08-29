@@ -1119,7 +1119,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0-go-to-hell",
-	Host:             "192.168.100.16:3000",
+	Host:             "79.175.222.18:40000",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Dispatcher microservice",

@@ -286,7 +286,7 @@ definitions:
       usersUpdated:
         type: integer
     type: object
-host: 192.168.100.16:3000
+host: 79.175.222.18:40000
 info:
   contact:
     email: not_my@business.com

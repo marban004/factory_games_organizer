@@ -21,7 +21,7 @@ import (
 //	@license.name	You think I have a license?
 //	@license.url	404
 
-//	@host		192.168.100.16:8080
+//	@host		79.175.222.18:8080
 //	@BasePath	/
 
 //	@OpenAPIDefinition(servers	= {@Server(url = "/", description = "a microservice host"), @Server(url = "/", description = "calculator microservice, microservices are differentiated by port number")})

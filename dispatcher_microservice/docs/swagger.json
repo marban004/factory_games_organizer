@@ -14,7 +14,7 @@
         },
         "version": "1.0-go-to-hell"
     },
-    "host": "192.168.100.16:3000",
+    "host": "79.175.222.18:40000",
     "basePath": "/",
     "paths": {
         "/calculator/calculate": {

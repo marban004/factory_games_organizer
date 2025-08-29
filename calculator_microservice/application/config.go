@@ -11,6 +11,7 @@ type Config struct {
 	ServerPort       uint16
 	ServerSecretPath string
 	ServerCertPath   string
+	Host             string
 }
 
 func LoadConfig() Config {
@@ -19,6 +20,7 @@ func LoadConfig() Config {
 		ServerPort:       3000,
 		ServerSecretPath: "calculator_microservice_secret.pem",
 		ServerCertPath:   "calculator_microservice_cert.crt",
+		Host:             "localhost",
 	}
 	if dbAddr, exists := os.LookupEnv("MYSQL_ADDR"); exists {
 		cfg.DbAddress = dbAddr
@@ -37,6 +39,10 @@ func LoadConfig() Config {
 	if serverCertPath, exists := os.LookupEnv("CERT"); exists {
 		cfg.ServerCertPath = serverCertPath
 		fmt.Println("Found certificate file path", serverCertPath)
+	}
+	if host, exists := os.LookupEnv("HOST"); exists {
+		cfg.Host = host
+		fmt.Println("Found host server address:", host)
 	}
 	return cfg
 }

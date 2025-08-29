@@ -34,7 +34,7 @@ func (a *AppCalculator) loadRoutes() {
 	router.Get("/health", calculatorHandler.Health)
 	router.Get("/calculate", calculatorHandler.Calculate)
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("https://localhost:%d/swagger/doc.json", a.config.ServerPort)), //The url pointing to API definition
+		httpSwagger.URL(fmt.Sprintf("https://%s:%d/swagger/doc.json", a.config.Host, a.config.ServerPort)), //The url pointing to API definition
 	))
 	a.router = router
 }

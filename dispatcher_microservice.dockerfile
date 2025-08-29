@@ -1,0 +1,13 @@
+FROM golang:latest
+
+WORKDIR /app
+
+ADD dispatcher_microservice/application dispatcher_microservice/application
+ADD dispatcher_microservice/handler dispatcher_microservice/handler
+ADD dispatcher_microservice/microservice_logic_dispatcher dispatcher_microservice/microservice_logic_dispatcher
+ADD dispatcher_microservice/docs dispatcher_microservice/docs
+COPY dispatcher_microservice/go.mod dispatcher_microservice/go.sum dispatcher_microservice/main.go dispatcher_microservice/dispatcher_microservice_secret.pem dispatcher_microservice/dispatcher_microservice_cert.crt dispatcher_microservice/
+WORKDIR /app/dispatcher_microservice
+RUN go mod download
+RUN go build -o main .
+ENTRYPOINT [ "/app/dispatcher_microservice/main" ]

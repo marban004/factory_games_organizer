@@ -19,8 +19,8 @@ func (a *AppDispatcher) loadRoutes() {
 		CalculatorMicroservicesAddresses: a.calculatorMicroservicesAddresses,
 	}
 	router := chi.NewRouter()
-
 	router.Use(middleware.Logger)
+	router.Use(a.statTracker.ApiStatTracker)
 	router.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
@@ -36,7 +36,7 @@ func (a *AppDispatcher) loadRoutes() {
 	})
 	router.Get("/health", dispatcherhandler.Health)
 	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("https://192.168.100.16:%d/swagger/doc.json", a.config.ServerPort)), //The url pointing to API definition
+		httpSwagger.URL(fmt.Sprintf("https://%s:%d/swagger/doc.json", a.config.Host, a.config.ServerPort)), //The url pointing to API definition
 	))
 	router.Route("/users", a.loadUserRoutes)
 	router.Route("/crud", a.loadCrudRoutes)
