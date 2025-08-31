@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 	"github.com/marban004/factory_games_organizer/microservice_logic_crud/model"
 	"github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/machine"
 	machinerecipe "github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/machine_recipe"
@@ -16,6 +17,7 @@ import (
 	recipeinput "github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/recipe_input"
 	recipeoutput "github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/recipe_output"
 	"github.com/marban004/factory_games_organizer/microservice_logic_crud/repository/resource"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 type JSONData struct {
@@ -71,11 +73,18 @@ type CRUD struct {
 	RecipeoutputRepo  *recipeoutput.MySQLRepo
 	MachineRecipeRepo *machinerecipe.MySQLRepo
 	Secret            []byte
+	StatTracker       *custommiddleware.DefaultApiStatTracker
 }
 
 type HealthResponse struct {
 	MicroserviceStatus string
 	DatabaseStatus     string
+}
+
+type StatsResponse struct {
+	ApiUsageStats    *orderedmap.OrderedMap[string, map[string]int]
+	TrackingPeriodMs int64
+	NoPeriods        uint64
 }
 
 // Health return the status of microservice and associated database
@@ -96,6 +105,25 @@ func (h *CRUD) Health(w http.ResponseWriter, r *http.Request) {
 		response.DatabaseStatus = "up"
 	}
 	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// Stats return the usage stats of microservice
+//
+//	@Description	Return the usage stats of microservice.
+//	@Tags			CRUD
+//	@Success		200	{object}	handler.StatsResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/stats [get]
+func (h *CRUD) Stats(w http.ResponseWriter, r *http.Request) {
+	endpointResponse := StatsResponse{ApiUsageStats: h.StatTracker.GetStats(), TrackingPeriodMs: h.StatTracker.Period, NoPeriods: h.StatTracker.MaxLen}
+	byteJSONRepresentation, err := json.Marshal(endpointResponse)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))

@@ -1,5 +1,9 @@
 package handler
 
+import (
+	orderedmap "github.com/wk8/go-ordered-map/v2"
+)
+
 type CreateUserResponse struct {
 	UsersCreated uint
 }
@@ -79,4 +83,10 @@ type ProductionTreeNode struct {
 	RequiredResourcesPerSecond map[string]float32
 	ProducedResourcesPerSecond map[string]float32
 	SourceNodes                []int
+}
+
+type StatsResponse struct {
+	ApiUsageStats    *orderedmap.OrderedMap[string, map[string]int]
+	TrackingPeriodMs int64
+	NoPeriods        uint64
 }

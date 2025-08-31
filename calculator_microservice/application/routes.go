@@ -13,8 +13,13 @@ import (
 
 func (a *AppCalculator) loadRoutes() {
 	router := chi.NewRouter()
+	calculatorHandler := &handler.Calculator{
+		DB:          a.db,
+		StatTracker: a.statTracker,
+	}
 
 	router.Use(middleware.Logger)
+	router.Use(a.statTracker.ApiStatTracker)
 	router.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
@@ -25,13 +30,11 @@ func (a *AppCalculator) loadRoutes() {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
-	calculatorHandler := &handler.Calculator{
-		DB: a.db,
-	}
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 	router.Get("/health", calculatorHandler.Health)
+	router.Get("/stats", calculatorHandler.Stats)
 	router.Get("/calculate", calculatorHandler.Calculate)
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(fmt.Sprintf("https://%s:%d/swagger/doc.json", a.config.Host, a.config.ServerPort)), //The url pointing to API definition

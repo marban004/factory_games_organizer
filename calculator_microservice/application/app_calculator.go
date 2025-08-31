@@ -8,18 +8,21 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 )
 
 type AppCalculator struct {
-	router http.Handler
-	db     *sql.DB
-	config Config
+	router      http.Handler
+	db          *sql.DB
+	config      Config
+	statTracker *custommiddleware.DefaultApiStatTracker
 }
 
 func New(config Config) *AppCalculator {
 	app := &AppCalculator{
 		config: config,
 	}
+	app.statTracker = &custommiddleware.DefaultApiStatTracker{MaxLen: config.TrackerCapacity, Period: config.TrackerTimePeriod, ApiStatsFile: config.ApiStatsFile, DumpStats: config.DumpStats}
 	app.loadDB()
 	app.loadRoutes()
 	return app
@@ -52,6 +55,7 @@ func (a *AppCalculator) Start(ctx context.Context) error {
 		}
 		close(ch)
 	}()
+	a.statTracker.StartTracker(ctx)
 
 	select {
 	case err = <-ch:

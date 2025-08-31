@@ -17,6 +17,7 @@ func (a *AppDispatcher) loadRoutes() {
 		UsersMicroservicesAddresses:      a.usersMicroservicesAddresses,
 		CrudMicroservicesAddresses:       a.crudMicroservicesAddresses,
 		CalculatorMicroservicesAddresses: a.calculatorMicroservicesAddresses,
+		StatTracker:                      a.statTracker,
 	}
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -35,6 +36,7 @@ func (a *AppDispatcher) loadRoutes() {
 		w.WriteHeader(http.StatusOK)
 	})
 	router.Get("/health", dispatcherhandler.Health)
+	router.Get("/stats", dispatcherhandler.Stats)
 	router.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL(fmt.Sprintf("https://%s:%d/swagger/doc.json", a.config.Host, a.config.ServerPort)), //The url pointing to API definition
 	))

@@ -14,12 +14,14 @@ import (
 
 func (a *AppUsers) loadRoutes() {
 	usersHandler := &handler.Users{
-		UserRepo: &user.MySQLRepo{DB: a.db},
-		Secret:   a.secret,
+		UserRepo:    &user.MySQLRepo{DB: a.db},
+		Secret:      a.secret,
+		StatTracker: a.statTracker,
 	}
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
+	router.Use(a.statTracker.ApiStatTracker)
 	router.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
@@ -33,6 +35,7 @@ func (a *AppUsers) loadRoutes() {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	router.Get("/stats", usersHandler.Stats)
 	router.Get("/health", usersHandler.Health)
 	router.Post("/login", usersHandler.LoginUser)
 	router.Post("/", usersHandler.CreateUser)

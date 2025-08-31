@@ -6,18 +6,21 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 )
 
 type Dispatcher struct {
 	UsersMicroservicesAddresses      []string
 	CrudMicroservicesAddresses       []string
 	CalculatorMicroservicesAddresses []string
+	StatTracker                      *custommiddleware.DefaultApiStatTracker
 }
 
 // Health return the status of microservices and their associated databases
 //
 //	@Description	Return the status of microservice and it's database. Default working state is signified by status "up".
-//	@Tags			All microservices
+//	@Tags			Dispatcher
 //	@Success		200	{object}	handler.HealthResponse
 //	@Failure		500	{string}	string	"Unexpected serverside error"
 //	@Router			/health [get]
@@ -51,6 +54,25 @@ func (h *Dispatcher) Health(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	byteJSONRepresentation, err := json.Marshal(endpointResponse)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// Stats return the usage stats of microservice
+//
+//	@Description	Return the usage stats of microservice.
+//	@Tags			Dispatcher
+//	@Success		200	{object}	handler.StatsResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/stats [get]
+func (h *Dispatcher) Stats(w http.ResponseWriter, r *http.Request) {
+	endpointResponse := StatsResponse{ApiUsageStats: h.StatTracker.GetStats(), TrackingPeriodMs: h.StatTracker.Period, NoPeriods: h.StatTracker.MaxLen}
 	byteJSONRepresentation, err := json.Marshal(endpointResponse)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

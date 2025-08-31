@@ -4,3 +4,4 @@
 *.srl
 *.csr
 *.cnf
+*api_stats.json

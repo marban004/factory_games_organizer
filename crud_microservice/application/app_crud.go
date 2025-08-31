@@ -9,19 +9,22 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 )
 
 type AppCrud struct {
-	router http.Handler
-	db     *sql.DB
-	secret []byte
-	config Config
+	router      http.Handler
+	db          *sql.DB
+	secret      []byte
+	config      Config
+	statTracker *custommiddleware.DefaultApiStatTracker
 }
 
 func New(config Config) *AppCrud {
 	app := &AppCrud{
 		config: config,
 	}
+	app.statTracker = &custommiddleware.DefaultApiStatTracker{MaxLen: config.TrackerCapacity, Period: config.TrackerTimePeriod, ApiStatsFile: config.ApiStatsFile, DumpStats: config.DumpStats}
 	app.loadSecret()
 	app.loadDB()
 	app.loadRoutes()
@@ -55,6 +58,7 @@ func (a *AppCrud) Start(ctx context.Context) error {
 		}
 		close(ch)
 	}()
+	a.statTracker.StartTracker(ctx)
 
 	select {
 	case err = <-ch:

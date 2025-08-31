@@ -27,7 +27,7 @@ func LoadConfig() Config {
 		// DbAddress:                        "127.0.0.1:3306",
 		ServerPort:                       3000,
 		TrackerCapacity:                  1440,
-		TrackerTimePeriod:                1000,
+		TrackerTimePeriod:                60000,
 		ServerSecretPath:                 "dispatcher_microservice_secret.pem",
 		ServerCertPath:                   "dispatcher_microservice_cert.crt",
 		Host:                             "localhost",

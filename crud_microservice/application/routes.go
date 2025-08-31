@@ -26,10 +26,12 @@ func (a *AppCrud) loadRoutes() {
 		RecipeoutputRepo:  &recipeoutput.MySQLRepo{DB: a.db},
 		MachineRecipeRepo: &machinerecipe.MySQLRepo{DB: a.db},
 		Secret:            a.secret,
+		StatTracker:       a.statTracker,
 	}
 	router := chi.NewRouter()
 
 	router.Use(middleware.Logger)
+	router.Use(a.statTracker.ApiStatTracker)
 	router.Use(cors.Handler(cors.Options{
 		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"https://*", "http://*"},
@@ -44,6 +46,7 @@ func (a *AppCrud) loadRoutes() {
 		w.WriteHeader(http.StatusOK)
 	})
 	router.Get("/health", crudHandler.Health)
+	router.Get("/stats", crudHandler.Stats)
 	router.Get("/selectbyid", crudHandler.SelectByID)
 	router.Get("/select", crudHandler.Select)
 	router.Post("/", crudHandler.Insert)

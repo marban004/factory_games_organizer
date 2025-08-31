@@ -7,16 +7,25 @@ import (
 	"net/http"
 	"strconv"
 
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 	microservicelogiccalculator "github.com/marban004/factory_games_organizer/microservice_logic_calculator"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
 type Calculator struct {
-	DB *sql.DB
+	DB          *sql.DB
+	StatTracker *custommiddleware.DefaultApiStatTracker
 }
 
 type HealthResponse struct {
 	MicroserviceStatus string
 	DatabaseStatus     string
+}
+
+type StatsResponse struct {
+	ApiUsageStats    *orderedmap.OrderedMap[string, map[string]int]
+	TrackingPeriodMs int64
+	NoPeriods        uint64
 }
 
 // Calculate return the calculated production tree for specified resource
@@ -83,6 +92,25 @@ func (h *Calculator) Health(w http.ResponseWriter, r *http.Request) {
 		response.DatabaseStatus = "up"
 	}
 	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// Stats return the usage stats of microservice
+//
+//	@Description	Return the usage stats of microservice.
+//	@Tags			Calculator
+//	@Success		200	{object}	handler.StatsResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/stats [get]
+func (h *Calculator) Stats(w http.ResponseWriter, r *http.Request) {
+	endpointResponse := StatsResponse{ApiUsageStats: h.StatTracker.GetStats(), TrackingPeriodMs: h.StatTracker.Period, NoPeriods: h.StatTracker.MaxLen}
+	byteJSONRepresentation, err := json.Marshal(endpointResponse)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))

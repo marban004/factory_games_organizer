@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	custommiddleware "github.com/marban004/factory_games_organizer/custom_middleware"
 	"github.com/marban004/factory_games_organizer/microservice_logic_users/model"
 	"github.com/marban004/factory_games_organizer/microservice_logic_users/repository/user"
+	orderedmap "github.com/wk8/go-ordered-map/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,8 +23,9 @@ type JSONData struct {
 }
 
 type Users struct {
-	UserRepo *user.MySQLRepo
-	Secret   []byte
+	UserRepo    *user.MySQLRepo
+	Secret      []byte
+	StatTracker *custommiddleware.DefaultApiStatTracker
 }
 
 type CreateUserResponse struct {
@@ -46,6 +49,12 @@ type HealthResponse struct {
 	DatabaseStatus     string
 }
 
+type StatsResponse struct {
+	ApiUsageStats    *orderedmap.OrderedMap[string, map[string]int]
+	TrackingPeriodMs int64
+	NoPeriods        uint64
+}
+
 // Health return the status of microservice and associated database
 //
 //	@Description	Return the status of microservice and it's database. Default working state is signified by status "up".
@@ -64,6 +73,25 @@ func (h *Users) Health(w http.ResponseWriter, r *http.Request) {
 		response.DatabaseStatus = "up"
 	}
 	byteJSONRepresentation, err := json.Marshal(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(byteJSONRepresentation)
+}
+
+// Stats return the usage stats of microservice
+//
+//	@Description	Return the usage stats of microservice.
+//	@Tags			Users
+//	@Success		200	{object}	handler.StatsResponse
+//	@Failure		500	{string}	string	"Unexpected serverside error"
+//	@Router			/stats [get]
+func (h *Users) Stats(w http.ResponseWriter, r *http.Request) {
+	endpointResponse := StatsResponse{ApiUsageStats: h.StatTracker.GetStats(), TrackingPeriodMs: h.StatTracker.Period, NoPeriods: h.StatTracker.MaxLen}
+	byteJSONRepresentation, err := json.Marshal(endpointResponse)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(fmt.Errorf("could not generate json representation of response, reason: %w", err).Error()))
