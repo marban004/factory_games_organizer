@@ -85,7 +85,7 @@ func (h *Dispatcher) Stats(w http.ResponseWriter, r *http.Request) {
 
 func (h *Dispatcher) checkMicroservicesHealth(ctx context.Context, endpointResponseArray *[]MicroserviceHealth, client *http.Client, microserviceAddressList []string) error {
 	for _, address := range microserviceAddressList {
-		microserviceStatus := MicroserviceHealth{MicroserviceURl: address}
+		microserviceStatus := MicroserviceHealth{MicroserviceURL: address}
 		request, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("https://%s/health", address), nil)
 		if err != nil {
 			return err

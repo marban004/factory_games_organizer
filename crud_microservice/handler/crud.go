@@ -914,8 +914,6 @@ func (h *CRUD) Delete(w http.ResponseWriter, r *http.Request) {
 //	@Description	Deletes all data in the database that belongs to user who presented the authentication token.
 //	@Tags			CRUD Authorization required
 //
-//	@Accept			json
-//
 //	@Success		200	{object}	handler.DeleteResponse
 //	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
 //	@Failure		401	{string}	string	"Authentication error"

@@ -57,7 +57,7 @@ func (h *Calculator) Calculate(w http.ResponseWriter, r *http.Request) {
 	desiredRate, err := strconv.ParseFloat(r.URL.Query().Get("rate"), 32)
 	if err != nil || desiredRate <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("userid should be a positive floating point number and cannot be empty"))
+		w.Write([]byte("rate should be a positive floating point number and cannot be empty"))
 		return
 	}
 	recipes_names := r.URL.Query()["alt_recipe"]

@@ -21,7 +21,7 @@ type DeleteUserResponse struct {
 }
 
 type MicroserviceHealth struct {
-	MicroserviceURl    string
+	MicroserviceURL    string
 	MicroserviceStatus string
 	DatabaseStatus     string
 }

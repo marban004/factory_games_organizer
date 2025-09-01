@@ -77,8 +77,6 @@ func (h *DispatcherUsers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 //	@Description	Delete user's data in database. The user whose data is deleted is the user who presented the authentication token.
 //	@Tags			Users Authorization required
 //
-//	@Accept			json
-//
 //	@Success		200	{object}	handler.DeleteUserResponse
 //	@Failure		400	{string}	string	"Bad request. One of required parameters is missing or is not of valid format"
 //	@Failure		401	{string}	string	"Authentication error"
