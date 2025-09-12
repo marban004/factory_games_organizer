@@ -4,17 +4,16 @@
         "description": "This is a CRUD microservice for Factory Games Organizer api. It is not meant to be accessed directly. Access to the microservice should be done through dispatcher microservice.",
         "title": "CRUD microservice",
         "contact": {
-            "name": "Ur on your own",
-            "url": "404",
-            "email": "not_my@business.com"
+            "name": "Marek Banaś",
+            "email": "marek.banas004@gmail.com"
         },
         "license": {
-            "name": "You think I have a license?",
-            "url": "404"
+            "name": "GPL-3.0",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
         },
-        "version": "1.0-go-to-hell"
+        "version": "1.0"
     },
-    "host": "192.168.100.16:8081",
+    "host": "79.175.222.18:8081",
     "basePath": "/",
     "paths": {
         "/": {
@@ -384,6 +383,28 @@
                 }
             }
         },
+        "/stats": {
+            "get": {
+                "description": "Return the usage stats of microservice.",
+                "tags": [
+                    "CRUD"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.StatsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "delete": {
                 "security": [
@@ -392,9 +413,6 @@
                     }
                 ],
                 "description": "Deletes all data in the database that belongs to user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "CRUD Authorization required"
                 ],
@@ -564,6 +582,22 @@
                     "items": {
                         "$ref": "#/definitions/model.ResourceInfo"
                     }
+                }
+            }
+        },
+        "handler.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "apiUsageStats": {
+                    "type": "object"
+                },
+                "noPeriods": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "trackingPeriodMs": {
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },

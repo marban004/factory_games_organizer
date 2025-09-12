@@ -4,15 +4,14 @@
         "description": "This is a dispatcher microservice for Factory Games Organizer api. Api is responsible for creating, updating and authenicating api users, CRUD operations on database associated with the api and provides production calculator service.",
         "title": "Dispatcher microservice",
         "contact": {
-            "name": "Ur on your own",
-            "url": "404",
-            "email": "not_my@business.com"
+            "name": "Marek Banaś",
+            "email": "marek.banas004@gmail.com"
         },
         "license": {
-            "name": "You think I have a license?",
-            "url": "404"
+            "name": "GPL-3.0",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
         },
-        "version": "1.0-go-to-hell"
+        "version": "1.0"
     },
     "host": "79.175.222.18:40000",
     "basePath": "/",
@@ -433,9 +432,6 @@
                     }
                 ],
                 "description": "Deletes all data in the database that belongs to user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "CRUD Authorization required"
                 ],
@@ -471,13 +467,35 @@
             "get": {
                 "description": "Return the status of microservice and it's database. Default working state is signified by status \"up\".",
                 "tags": [
-                    "All microservices"
+                    "Dispatcher"
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handler.HealthResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats": {
+            "get": {
+                "description": "Return the usage stats of microservice.",
+                "tags": [
+                    "Dispatcher"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.StatsResponse"
                         }
                     },
                     "500": {
@@ -588,9 +606,6 @@
                     }
                 ],
                 "description": "Delete user's data in database. The user whose data is deleted is the user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "Users Authorization required"
                 ],
@@ -918,7 +933,7 @@
                 "microserviceStatus": {
                     "type": "string"
                 },
-                "microserviceURl": {
+                "microserviceURL": {
                     "type": "string"
                 }
             }
@@ -1066,6 +1081,22 @@
                 },
                 "nodeId": {
                     "type": "integer"
+                }
+            }
+        },
+        "handler.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "apiUsageStats": {
+                    "type": "object"
+                },
+                "noPeriods": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "trackingPeriodMs": {
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },

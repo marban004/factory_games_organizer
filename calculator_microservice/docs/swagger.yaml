@@ -7,6 +7,17 @@ definitions:
       microserviceStatus:
         type: string
     type: object
+  handler.StatsResponse:
+    properties:
+      apiUsageStats:
+        type: object
+      noPeriods:
+        format: int64
+        type: integer
+      trackingPeriodMs:
+        format: int64
+        type: integer
+    type: object
   microservicelogiccalculator.ProductionTree:
     properties:
       excessResources:
@@ -64,20 +75,19 @@ definitions:
       nodeId:
         type: integer
     type: object
-host: 192.168.100.16:8080
+host: 79.175.222.18:8080
 info:
   contact:
-    email: not_my@business.com
-    name: Ur on your own
-    url: "404"
+    email: marek.banas004@gmail.com
+    name: Marek Banaś
   description: This is a calculator microservice for Factory Games Organizer api.
     It is not meant to be accessed directly. Access to the microservice should be
     done through dispatcher microservice.
   license:
-    name: You think I have a license?
-    url: "404"
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
   title: Calculator microservice
-  version: 1.0-go-to-hell
+  version: "1.0"
 paths:
   /calculate:
     get:
@@ -134,6 +144,20 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handler.HealthResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Calculator
+  /stats:
+    get:
+      description: Return the usage stats of microservice.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StatsResponse'
         "500":
           description: Unexpected serverside error
           schema:

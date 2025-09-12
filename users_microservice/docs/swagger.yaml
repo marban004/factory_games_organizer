@@ -29,25 +29,35 @@ definitions:
       jwt:
         type: string
     type: object
+  handler.StatsResponse:
+    properties:
+      apiUsageStats:
+        type: object
+      noPeriods:
+        format: int64
+        type: integer
+      trackingPeriodMs:
+        format: int64
+        type: integer
+    type: object
   handler.UpdateUserResponse:
     properties:
       usersUpdated:
         type: integer
     type: object
-host: 192.168.100.16:8082
+host: 79.175.222.18:8082
 info:
   contact:
-    email: not_my@business.com
-    name: Ur on your own
-    url: "404"
+    email: marek.banas004@gmail.com
+    name: Marek Banaś
   description: This is a Users microservice for Factory Games Organizer api. It is
     not meant to be accessed directly. Access to the microservice should be done through
     dispatcher microservice.
   license:
-    name: You think I have a license?
-    url: "404"
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
   title: Users microservice
-  version: 1.0-go-to-hell
+  version: "1.0"
 paths:
   /:
     delete:
@@ -184,6 +194,20 @@ paths:
             of valid format or invalid login data has been sent
           schema:
             type: string
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Users
+  /stats:
+    get:
+      description: Return the usage stats of microservice.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StatsResponse'
         "500":
           description: Unexpected serverside error
           schema:

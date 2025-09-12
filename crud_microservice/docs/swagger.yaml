@@ -91,6 +91,17 @@ definitions:
           $ref: '#/definitions/model.ResourceInfo'
         type: array
     type: object
+  handler.StatsResponse:
+    properties:
+      apiUsageStats:
+        type: object
+      noPeriods:
+        format: int64
+        type: integer
+      trackingPeriodMs:
+        format: int64
+        type: integer
+    type: object
   handler.UpdateResponse:
     properties:
       machinesRecipesUpdated:
@@ -183,20 +194,19 @@ definitions:
       usersId:
         type: integer
     type: object
-host: 192.168.100.16:8081
+host: 79.175.222.18:8081
 info:
   contact:
-    email: not_my@business.com
-    name: Ur on your own
-    url: "404"
+    email: marek.banas004@gmail.com
+    name: Marek Banaś
   description: This is a CRUD microservice for Factory Games Organizer api. It is
     not meant to be accessed directly. Access to the microservice should be done through
     dispatcher microservice.
   license:
-    name: You think I have a license?
-    url: "404"
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
   title: CRUD microservice
-  version: 1.0-go-to-hell
+  version: "1.0"
 paths:
   /:
     delete:
@@ -455,10 +465,22 @@ paths:
       - apiTokenAuth: []
       tags:
       - CRUD Authorization required
+  /stats:
+    get:
+      description: Return the usage stats of microservice.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StatsResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - CRUD
   /user:
     delete:
-      consumes:
-      - application/json
       description: Deletes all data in the database that belongs to user who presented
         the authentication token.
       responses:

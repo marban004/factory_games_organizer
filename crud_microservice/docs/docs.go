@@ -10,13 +10,12 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "Ur on your own",
-            "url": "404",
-            "email": "not_my@business.com"
+            "name": "Marek Banaś",
+            "email": "marek.banas004@gmail.com"
         },
         "license": {
-            "name": "You think I have a license?",
-            "url": "404"
+            "name": "GPL-3.0",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
         },
         "version": "{{.Version}}"
     },
@@ -390,6 +389,28 @@ const docTemplate = `{
                 }
             }
         },
+        "/stats": {
+            "get": {
+                "description": "Return the usage stats of microservice.",
+                "tags": [
+                    "CRUD"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.StatsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "delete": {
                 "security": [
@@ -398,9 +419,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Deletes all data in the database that belongs to user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "CRUD Authorization required"
                 ],
@@ -573,6 +591,22 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "apiUsageStats": {
+                    "type": "object"
+                },
+                "noPeriods": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "trackingPeriodMs": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
         "handler.UpdateResponse": {
             "type": "object",
             "properties": {
@@ -724,8 +758,8 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0-go-to-hell",
-	Host:             "192.168.100.16:8081",
+	Version:          "1.0",
+	Host:             "79.175.222.18:8081",
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "CRUD microservice",

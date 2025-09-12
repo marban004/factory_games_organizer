@@ -165,7 +165,7 @@ definitions:
         type: string
       microserviceStatus:
         type: string
-      microserviceURl:
+      microserviceURL:
         type: string
     type: object
   handler.ProductionTreeCalculator:
@@ -266,6 +266,17 @@ definitions:
       nodeId:
         type: integer
     type: object
+  handler.StatsResponse:
+    properties:
+      apiUsageStats:
+        type: object
+      noPeriods:
+        format: int64
+        type: integer
+      trackingPeriodMs:
+        format: int64
+        type: integer
+    type: object
   handler.UpdateResponseCrud:
     properties:
       machinesRecipesUpdated:
@@ -289,17 +300,16 @@ definitions:
 host: 79.175.222.18:40000
 info:
   contact:
-    email: not_my@business.com
-    name: Ur on your own
-    url: "404"
+    email: marek.banas004@gmail.com
+    name: Marek Banaś
   description: This is a dispatcher microservice for Factory Games Organizer api.
     Api is responsible for creating, updating and authenicating api users, CRUD operations
     on database associated with the api and provides production calculator service.
   license:
-    name: You think I have a license?
-    url: "404"
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.html
   title: Dispatcher microservice
-  version: 1.0-go-to-hell
+  version: "1.0"
 paths:
   /calculator/calculate:
     get:
@@ -591,8 +601,6 @@ paths:
       - CRUD Authorization required
   /crud/user:
     delete:
-      consumes:
-      - application/json
       description: Deletes all data in the database that belongs to user who presented
         the authentication token.
       responses:
@@ -631,11 +639,23 @@ paths:
           schema:
             type: string
       tags:
-      - All microservices
+      - Dispatcher
+  /stats:
+    get:
+      description: Return the usage stats of microservice.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.StatsResponse'
+        "500":
+          description: Unexpected serverside error
+          schema:
+            type: string
+      tags:
+      - Dispatcher
   /users:
     delete:
-      consumes:
-      - application/json
       description: Delete user's data in database. The user whose data is deleted
         is the user who presented the authentication token.
       responses:

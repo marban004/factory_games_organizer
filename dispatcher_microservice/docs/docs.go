@@ -10,13 +10,12 @@ const docTemplate = `{
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
         "contact": {
-            "name": "Ur on your own",
-            "url": "404",
-            "email": "not_my@business.com"
+            "name": "Marek Banaś",
+            "email": "marek.banas004@gmail.com"
         },
         "license": {
-            "name": "You think I have a license?",
-            "url": "404"
+            "name": "GPL-3.0",
+            "url": "https://www.gnu.org/licenses/gpl-3.0.html"
         },
         "version": "{{.Version}}"
     },
@@ -439,9 +438,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Deletes all data in the database that belongs to user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "CRUD Authorization required"
                 ],
@@ -477,13 +473,35 @@ const docTemplate = `{
             "get": {
                 "description": "Return the status of microservice and it's database. Default working state is signified by status \"up\".",
                 "tags": [
-                    "All microservices"
+                    "Dispatcher"
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/handler.HealthResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Unexpected serverside error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats": {
+            "get": {
+                "description": "Return the usage stats of microservice.",
+                "tags": [
+                    "Dispatcher"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.StatsResponse"
                         }
                     },
                     "500": {
@@ -594,9 +612,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Delete user's data in database. The user whose data is deleted is the user who presented the authentication token.",
-                "consumes": [
-                    "application/json"
-                ],
                 "tags": [
                     "Users Authorization required"
                 ],
@@ -924,7 +939,7 @@ const docTemplate = `{
                 "microserviceStatus": {
                     "type": "string"
                 },
-                "microserviceURl": {
+                "microserviceURL": {
                     "type": "string"
                 }
             }
@@ -1075,6 +1090,22 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "apiUsageStats": {
+                    "type": "object"
+                },
+                "noPeriods": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "trackingPeriodMs": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
         "handler.UpdateResponseCrud": {
             "type": "object",
             "properties": {
@@ -1118,7 +1149,7 @@ const docTemplate = `{
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0-go-to-hell",
+	Version:          "1.0",
 	Host:             "79.175.222.18:40000",
 	BasePath:         "/",
 	Schemes:          []string{},
