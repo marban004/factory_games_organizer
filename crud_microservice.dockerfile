@@ -2,6 +2,7 @@ FROM golang:latest
 
 WORKDIR /app
 
+ADD ca.crt /etc/ssl/certs/
 ADD crud_microservice/application crud_microservice/application
 ADD crud_microservice/handler crud_microservice/handler
 ADD crud_microservice/microservice_logic_crud crud_microservice/microservice_logic_crud

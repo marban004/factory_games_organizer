@@ -2,6 +2,7 @@ FROM golang:latest
 
 WORKDIR /app
 
+ADD ca.crt /etc/ssl/certs/
 ADD dispatcher_microservice/application dispatcher_microservice/application
 ADD dispatcher_microservice/handler dispatcher_microservice/handler
 ADD dispatcher_microservice/microservice_logic_dispatcher dispatcher_microservice/microservice_logic_dispatcher

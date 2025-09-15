@@ -6,3 +6,4 @@
 *.cnf
 *api_stats.json
 docker_compose_fgo_api.yml
+all.sql

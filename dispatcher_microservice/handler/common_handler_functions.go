@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -43,7 +44,12 @@ func (h *CommonHandlerFunctions) useNextMicroservice(len uint) {
 }
 
 func (h *CommonHandlerFunctions) redirectRequest(w http.ResponseWriter, r *http.Request, requestEndpoint string, microserviceAddressArray []string) {
-	request, err := http.NewRequestWithContext(r.Context(), r.Method, fmt.Sprintf("https://%s/%s", microserviceAddressArray[h.NextMicroservice], requestEndpoint), r.Body)
+	redirectURI := fmt.Sprintf("https://%s/%s", microserviceAddressArray[h.NextMicroservice], requestEndpoint)
+	_, params, paramsPresent := strings.Cut(r.RequestURI, "?")
+	if paramsPresent {
+		redirectURI += "?" + params
+	}
+	request, err := http.NewRequestWithContext(r.Context(), r.Method, redirectURI, r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("could not create request to microservice"))
