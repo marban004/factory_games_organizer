@@ -87,7 +87,7 @@ func (r *MySQLRepo) InsertMachinesRecipes(ctx context.Context, data []model.Mach
 	query := "INSERT INTO machines_recipes(users_id, recipes_id, machines_id) VALUES"
 	i := 0
 	for _, entry := range data {
-		err := r.verifyRecipeMachineIntegrity(ctx, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		err := r.verifyRecipeMachineIntegrity(ctx, entry.RecipesId, entry.MachinesId, userId)
 		if err.Error() == sql.ErrNoRows.Error() {
 			continue
 		}
@@ -148,7 +148,7 @@ func (r *MySQLRepo) UpdateMachinesRecipes(ctx context.Context, data []model.Mach
 			continue
 		}
 		query := fmt.Sprintf("UPDATE machines_recipes SET recipes_id='%d', machines_id=%d WHERE id=%d and users_id=%d;",
-			entry.RecipesId, entry.MachinesId, entry.Id, entry.UsersId)
+			entry.RecipesId, entry.MachinesId, entry.Id, userId)
 		result, err := transaction.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {
