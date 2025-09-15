@@ -83,14 +83,14 @@ func (r *MySQLRepo) SelectMachines(ctx context.Context, startId int, rowsRet int
 	return resultRows, nil
 }
 
-func (r *MySQLRepo) InsertMachines(ctx context.Context, data []model.MachineInfo) (sql.Result, error) {
+func (r *MySQLRepo) InsertMachines(ctx context.Context, data []model.MachineInfo, userId uint) (sql.Result, error) {
 	query := "INSERT INTO machines(name, users_id, inputs_solid, inputs_liquid, outputs_solid, outputs_liquid, speed, power_consumption_kw, default_choice) VALUES"
 	for i, entry := range data {
 		if i != 0 {
 			query += ","
 		}
 		query += ` ("` + entry.Name +
-			`", ` + fmt.Sprint(entry.UsersId) +
+			`", ` + fmt.Sprint(userId) +
 			`, ` + fmt.Sprint(entry.InputsSolid) +
 			`, ` + fmt.Sprint(entry.InputsLiquid) +
 			`, ` + fmt.Sprint(entry.OutputsSolid) +
@@ -136,7 +136,7 @@ func (r *MySQLRepo) DeleteMachinesByUserId(ctx context.Context, transaction *sql
 	return result, nil
 }
 
-func (r *MySQLRepo) UpdateMachines(ctx context.Context, data []model.MachineInfo) ([]sql.Result, error) {
+func (r *MySQLRepo) UpdateMachines(ctx context.Context, data []model.MachineInfo, userId uint) ([]sql.Result, error) {
 	results := []sql.Result{}
 	transaction, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -144,7 +144,7 @@ func (r *MySQLRepo) UpdateMachines(ctx context.Context, data []model.MachineInfo
 	}
 	for _, entry := range data {
 		query := fmt.Sprintf("UPDATE machines SET name='%s', inputs_solid=%d, inputs_liquid=%d, outputs_solid=%d, outputs_liquid=%d, speed=%f, power_consumption_kw=%d, default_choice=%d WHERE id=%d and users_id=%d;",
-			entry.Name, entry.InputsSolid, entry.InputsLiquid, entry.OutputsSolid, entry.OutputsLiquid, entry.Speed, entry.PowerConsumptionKw, entry.DefaultChoice, entry.Id, entry.UsersId)
+			entry.Name, entry.InputsSolid, entry.InputsLiquid, entry.OutputsSolid, entry.OutputsLiquid, entry.Speed, entry.PowerConsumptionKw, entry.DefaultChoice, entry.Id, userId)
 		result, err := transaction.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {

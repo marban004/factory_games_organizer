@@ -83,14 +83,14 @@ func (r *MySQLRepo) SelectResources(ctx context.Context, startId int, rowsRet in
 	return resultRows, nil
 }
 
-func (r *MySQLRepo) InsertResources(ctx context.Context, data []model.ResourceInfo) (sql.Result, error) {
+func (r *MySQLRepo) InsertResources(ctx context.Context, data []model.ResourceInfo, userId uint) (sql.Result, error) {
 	query := "INSERT INTO resources(name, users_id, liquid, resource_unit) VALUES"
 	for i, entry := range data {
 		if i != 0 {
 			query += ","
 		}
 		query += ` ("` + entry.Name +
-			`", ` + fmt.Sprint(entry.UsersId) +
+			`", ` + fmt.Sprint(userId) +
 			`, ` + fmt.Sprint(entry.Liquid) +
 			`, "` + fmt.Sprint(entry.ResourceUnit) + `")`
 	}
@@ -131,7 +131,7 @@ func (r *MySQLRepo) DeleteResourcesByUserId(ctx context.Context, transaction *sq
 	return result, nil
 }
 
-func (r *MySQLRepo) UpdateResources(ctx context.Context, data []model.ResourceInfo) ([]sql.Result, error) {
+func (r *MySQLRepo) UpdateResources(ctx context.Context, data []model.ResourceInfo, userId uint) ([]sql.Result, error) {
 	results := []sql.Result{}
 	transaction, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *MySQLRepo) UpdateResources(ctx context.Context, data []model.ResourceIn
 	}
 	for _, entry := range data {
 		query := fmt.Sprintf("UPDATE resources SET name='%s', liquid=%d, resource_unit='%s' WHERE id=%d and users_id=%d;",
-			entry.Name, entry.Liquid, entry.ResourceUnit, entry.Id, entry.UsersId)
+			entry.Name, entry.Liquid, entry.ResourceUnit, entry.Id, userId)
 		result, err := transaction.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {

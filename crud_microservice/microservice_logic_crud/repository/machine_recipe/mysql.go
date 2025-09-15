@@ -83,7 +83,7 @@ func (r *MySQLRepo) SelectMachinesRecipes(ctx context.Context, startId int, rows
 	return resultRows, nil
 }
 
-func (r *MySQLRepo) InsertMachinesRecipes(ctx context.Context, data []model.MachinesRecipesInfo) (sql.Result, error) {
+func (r *MySQLRepo) InsertMachinesRecipes(ctx context.Context, data []model.MachinesRecipesInfo, userId uint) (sql.Result, error) {
 	query := "INSERT INTO machines_recipes(users_id, recipes_id, machines_id) VALUES"
 	i := 0
 	for _, entry := range data {
@@ -95,7 +95,7 @@ func (r *MySQLRepo) InsertMachinesRecipes(ctx context.Context, data []model.Mach
 			query += ","
 		}
 		i++
-		query += ` (` + fmt.Sprint(entry.UsersId) +
+		query += ` (` + fmt.Sprint(userId) +
 			`, ` + fmt.Sprint(entry.RecipesId) +
 			`, ` + fmt.Sprint(entry.MachinesId) + `)`
 	}
@@ -136,14 +136,14 @@ func (r *MySQLRepo) DeleteMachinesRecipesByUserId(ctx context.Context, transacti
 	return result, nil
 }
 
-func (r *MySQLRepo) UpdateMachinesRecipes(ctx context.Context, data []model.MachinesRecipesInfo) ([]sql.Result, error) {
+func (r *MySQLRepo) UpdateMachinesRecipes(ctx context.Context, data []model.MachinesRecipesInfo, userId uint) ([]sql.Result, error) {
 	results := []sql.Result{}
 	transaction, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return results, fmt.Errorf("data has not been updated: %w", err)
 	}
 	for _, entry := range data {
-		err := r.verifyRecipeMachineIntegrity(ctx, entry.RecipesId, entry.MachinesId, entry.UsersId)
+		err := r.verifyRecipeMachineIntegrity(ctx, entry.RecipesId, entry.MachinesId, userId)
 		if err.Error() == sql.ErrNoRows.Error() {
 			continue
 		}

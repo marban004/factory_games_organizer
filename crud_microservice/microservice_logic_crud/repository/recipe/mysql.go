@@ -83,14 +83,14 @@ func (r *MySQLRepo) SelectRecipes(ctx context.Context, startId int, rowsRet int,
 	return resultRows, nil
 }
 
-func (r *MySQLRepo) InsertRecipes(ctx context.Context, data []model.RecipeInfo) (sql.Result, error) {
+func (r *MySQLRepo) InsertRecipes(ctx context.Context, data []model.RecipeInfo, userId uint) (sql.Result, error) {
 	query := "INSERT INTO recipes(name, users_id, production_time_s, default_choice) VALUES"
 	for i, entry := range data {
 		if i != 0 {
 			query += ","
 		}
 		query += ` ("` + entry.Name +
-			`", ` + fmt.Sprint(entry.UsersId) +
+			`", ` + fmt.Sprint(userId) +
 			`, ` + fmt.Sprint(entry.ProductionTimeS) +
 			`, "` + fmt.Sprint(entry.DefaultChoice) + `")`
 	}
@@ -131,7 +131,7 @@ func (r *MySQLRepo) DeleteRecipesByUserId(ctx context.Context, transaction *sql.
 	return result, nil
 }
 
-func (r *MySQLRepo) UpdateRecipes(ctx context.Context, data []model.RecipeInfo) ([]sql.Result, error) {
+func (r *MySQLRepo) UpdateRecipes(ctx context.Context, data []model.RecipeInfo, userId uint) ([]sql.Result, error) {
 	results := []sql.Result{}
 	transaction, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *MySQLRepo) UpdateRecipes(ctx context.Context, data []model.RecipeInfo) 
 	}
 	for _, entry := range data {
 		query := fmt.Sprintf("UPDATE recipes SET name='%s', production_time_s=%d, default_choice='%d' WHERE id=%d and users_id=%d;",
-			entry.Name, entry.ProductionTimeS, entry.DefaultChoice, entry.Id, entry.UsersId)
+			entry.Name, entry.ProductionTimeS, entry.DefaultChoice, entry.Id, userId)
 		result, err := transaction.ExecContext(ctx, query)
 		results = append(results, result)
 		if err != nil {

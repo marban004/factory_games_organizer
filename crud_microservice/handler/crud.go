@@ -482,10 +482,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 	response.MachinesRecipesInserted = 0
 	skipRows := false
 	if inputData.MachinesList != nil {
-		for _, entry := range inputData.MachinesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.MachineRepo.InsertMachines(r.Context(), inputData.MachinesList)
+		result, err := h.MachineRepo.InsertMachines(r.Context(), inputData.MachinesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested machines data, reason: %w", err).Error()))
@@ -500,10 +497,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.ResourcesList != nil {
-		for _, entry := range inputData.ResourcesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.ResourceRepo.InsertResources(r.Context(), inputData.ResourcesList)
+		result, err := h.ResourceRepo.InsertResources(r.Context(), inputData.ResourcesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested resources data, reason: %w", err).Error()))
@@ -518,10 +512,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesList != nil {
-		for _, entry := range inputData.RecipesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeRepo.InsertRecipes(r.Context(), inputData.RecipesList)
+		result, err := h.RecipeRepo.InsertRecipes(r.Context(), inputData.RecipesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested recipes data, reason: %w", err).Error()))
@@ -536,10 +527,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesInputsList != nil {
-		for _, entry := range inputData.RecipesInputsList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeinputRepo.InsertRecipesInputs(r.Context(), inputData.RecipesInputsList)
+		result, err := h.RecipeinputRepo.InsertRecipesInputs(r.Context(), inputData.RecipesInputsList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested recipes_inputs data, reason: %w", err).Error()))
@@ -554,10 +542,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesOutputsList != nil {
-		for _, entry := range inputData.RecipesOutputsList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeoutputRepo.InsertRecipesOutputs(r.Context(), inputData.RecipesOutputsList)
+		result, err := h.RecipeoutputRepo.InsertRecipesOutputs(r.Context(), inputData.RecipesOutputsList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested recipes_outputs data, reason: %w", err).Error()))
@@ -572,10 +557,7 @@ func (h *CRUD) Insert(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.MachinesRecipesList != nil {
-		for _, entry := range inputData.MachinesRecipesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.MachineRecipeRepo.InsertMachinesRecipes(r.Context(), inputData.MachinesRecipesList)
+		result, err := h.MachineRecipeRepo.InsertMachinesRecipes(r.Context(), inputData.MachinesRecipesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not insert requested machines_recipes data, reason: %w", err).Error()))
@@ -645,10 +627,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 	response.MachinesRecipesUpdated = 0
 	skipRows := false
 	if inputData.MachinesList != nil {
-		for _, entry := range inputData.MachinesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.MachineRepo.UpdateMachines(r.Context(), inputData.MachinesList)
+		result, err := h.MachineRepo.UpdateMachines(r.Context(), inputData.MachinesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested machines data, reason: %w", err).Error()))
@@ -666,10 +645,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.ResourcesList != nil {
-		for _, entry := range inputData.ResourcesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.ResourceRepo.UpdateResources(r.Context(), inputData.ResourcesList)
+		result, err := h.ResourceRepo.UpdateResources(r.Context(), inputData.ResourcesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested resources data, reason: %w", err).Error()))
@@ -687,10 +663,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesList != nil {
-		for _, entry := range inputData.RecipesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeRepo.UpdateRecipes(r.Context(), inputData.RecipesList)
+		result, err := h.RecipeRepo.UpdateRecipes(r.Context(), inputData.RecipesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes data, reason: %w", err).Error()))
@@ -708,10 +681,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesInputsList != nil {
-		for _, entry := range inputData.RecipesInputsList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeinputRepo.UpdateRecipesInputs(r.Context(), inputData.RecipesInputsList)
+		result, err := h.RecipeinputRepo.UpdateRecipesInputs(r.Context(), inputData.RecipesInputsList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes_inputs data, reason: %w", err).Error()))
@@ -729,10 +699,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.RecipesOutputsList != nil {
-		for _, entry := range inputData.RecipesOutputsList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.RecipeoutputRepo.UpdateRecipesOutputs(r.Context(), inputData.RecipesOutputsList)
+		result, err := h.RecipeoutputRepo.UpdateRecipesOutputs(r.Context(), inputData.RecipesOutputsList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested recipes_outputs data, reason: %w", err).Error()))
@@ -750,10 +717,7 @@ func (h *CRUD) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if inputData.MachinesRecipesList != nil {
-		for _, entry := range inputData.MachinesRecipesList {
-			entry.UsersId = uint(userId)
-		}
-		result, err := h.MachineRecipeRepo.UpdateMachinesRecipes(r.Context(), inputData.MachinesRecipesList)
+		result, err := h.MachineRecipeRepo.UpdateMachinesRecipes(r.Context(), inputData.MachinesRecipesList, uint(userId))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(fmt.Errorf("could not update requested machines_recipes data, reason: %w", err).Error()))

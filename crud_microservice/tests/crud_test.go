@@ -103,7 +103,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertMachines() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertMachines(context.Background(), input.MachinesList)
+	result, err := repo.InsertMachines(context.Background(), input.MachinesList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -124,7 +124,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateMachines() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateMachines(context.Background(), update.MachinesList)
+	resultArr, err := repo.UpdateMachines(context.Background(), update.MachinesList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
@@ -215,7 +215,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertResources() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertResources(context.Background(), input.ResourcesList)
+	result, err := repo.InsertResources(context.Background(), input.ResourcesList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -236,7 +236,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateResources() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateResources(context.Background(), update.ResourcesList)
+	resultArr, err := repo.UpdateResources(context.Background(), update.ResourcesList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
@@ -330,7 +330,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertRecipes() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertRecipes(context.Background(), input.RecipesList)
+	result, err := repo.InsertRecipes(context.Background(), input.RecipesList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -351,7 +351,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateRecipes() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateRecipes(context.Background(), update.RecipesList)
+	resultArr, err := repo.UpdateRecipes(context.Background(), update.RecipesList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
@@ -443,7 +443,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertRecipesInputs() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertRecipesInputs(context.Background(), input.RecipesInputsList)
+	result, err := repo.InsertRecipesInputs(context.Background(), input.RecipesInputsList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -464,7 +464,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateRecipesInputs() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateRecipesInputs(context.Background(), update.RecipesInputsList)
+	resultArr, err := repo.UpdateRecipesInputs(context.Background(), update.RecipesInputsList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
@@ -556,7 +556,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertRecipesOutputs() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertRecipesOutputs(context.Background(), input.RecipesOutputsList)
+	result, err := repo.InsertRecipesOutputs(context.Background(), input.RecipesOutputsList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -577,7 +577,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateRecipesOutputs() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateRecipesOutputs(context.Background(), update.RecipesOutputsList)
+	resultArr, err := repo.UpdateRecipesOutputs(context.Background(), update.RecipesOutputsList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
@@ -672,7 +672,7 @@ func (cits *CrudIntegrationTestSuite) TestInsertMachinesRecipes() {
 	input := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &input)
 
-	result, err := repo.InsertMachinesRecipes(context.Background(), input.MachinesRecipesList)
+	result, err := repo.InsertMachinesRecipes(context.Background(), input.MachinesRecipesList, 1)
 	cits.Nil(err)
 
 	rowsChanged, err := result.RowsAffected()
@@ -693,7 +693,7 @@ func (cits *CrudIntegrationTestSuite) TestUpdateMachinesRecipes() {
 	update := handler.JSONData{}
 	json.Unmarshal(jsonFileBytes, &update)
 
-	resultArr, err := repo.UpdateMachinesRecipes(context.Background(), update.MachinesRecipesList)
+	resultArr, err := repo.UpdateMachinesRecipes(context.Background(), update.MachinesRecipesList, 1)
 	cits.Nil(err)
 
 	rowsChanged := int64(0)
