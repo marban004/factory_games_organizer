@@ -58,7 +58,7 @@ func (r *MySQLRepo) SelectRecipesById(ctx context.Context, ids []int, userId int
 }
 
 func (r *MySQLRepo) SelectRecipes(ctx context.Context, startId int, rowsRet int, userId int) ([]model.RecipeInfo, error) {
-	query := "SELECT * FROM Recipes WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
+	query := "SELECT * FROM recipes WHERE id >= " + fmt.Sprint(startId) + " AND users_id = " + fmt.Sprint(userId)
 	if rowsRet > 0 {
 		query += " LIMIT " + fmt.Sprint(rowsRet)
 	}
